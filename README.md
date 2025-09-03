@@ -4,18 +4,30 @@ Repositório frontend da API para o 6º Semestre do curso de Banco de Dados da F
 
 ## Stack
 
-* **Nuxt 4** (Vue 3)
-* **TypeScript**
-* **@nuxt/ui** (UI components)
-* **ESLint** (qualidade de código)
+- **Nuxt 4** (Vue 3)
+- **TypeScript**
+- **@nuxt/ui** (UI components)
+- **ESLint** (qualidade de código)
 
 ## Instalação
 
 1. Instalar dependências:
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
+
+2. Instalar pre-commit hook:
+
+```bash
+pre-commit install
+```
+
+2.1. Ativação do pre-commit:
+
+```bash
+pre-commit install --hook-type commit-msg --hook-type pre-commit
+```
 
 ## Executando em desenvolvimento
 
@@ -23,11 +35,11 @@ Repositório frontend da API para o 6º Semestre do curso de Banco de Dados da F
 npm run dev
 ```
 
-* App: [http://localhost:3000](http://localhost:3000)
+- App: [http://localhost:3000](http://localhost:3000)
 
 ## Testes
 
-* Utiliza **@nuxt/test-utils** para testes.
+- Utiliza **@nuxt/test-utils** para testes.
 
 ```bash
 npm run test
@@ -37,12 +49,12 @@ npm run test
 
 1. Lint:
 
-    ```bash
-    npm run lint
-    ```
+   ```bash
+   npm run lint
+   ```
 
 2. Formatar (se configurado):
 
-    ```bash
-    npm run format
-    ```
+   ```bash
+   npm run format
+   ```
