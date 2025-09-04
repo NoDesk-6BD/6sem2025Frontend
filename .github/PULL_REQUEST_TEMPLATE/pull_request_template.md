@@ -24,4 +24,4 @@ A PR só será considerada concluída se atender aos critérios abaixo:
 - [ ] Branch sem conflitos com a branch principal da sprint.  
 - [ ] Pipeline de CI/CD executado com sucesso.  
 - [ ] PR contém descrição clara.  
-- [ ] Critérios de aceitação da tarefa no Jira foram atendidos.  
+- [ ] Critérios de aceitação da tarefa no Jira foram atendidos.
