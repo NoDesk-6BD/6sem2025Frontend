@@ -8,10 +8,6 @@ Breve explicação do que foi feito nesta PR.
 - [ ] Refatoração
 - [ ] Outros:
 
-### 📌 Observações
-- Algum ponto importante para revisão?
-- Dependências com outras PRs?
-
 ---
 
 ### ✅ Definition of Done (DoD)
