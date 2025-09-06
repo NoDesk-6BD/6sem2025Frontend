@@ -11,16 +11,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+
+      - name: Atualiza ubuntu
+        run: sudo apt-get update && sudo apt-get upgrade -y
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-      - name: Run build
-        run: npm run build
+
+      #- name: Clean install
+      #  run: |
+      #    rm -rf node_modules package-lock.json
+      #    npm install
+
+
+      #- name: Run build
+      # run: npm rebuild
