@@ -6,18 +6,18 @@
   --log_off-color: #ffbbbb;
 }
 
-
 .container {
   display: grid;
-  grid-template-columns: 1fr 6fr; /* 1/7 e 5/7 */
+  grid-template-columns: 1fr 6fr; /* 1/7 e 6/7 */
   height: 100vh;
-  width: 100vw;
+  width: auto;
 }
 
 .sidebar-content {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 100%;
 }
 
 .main-content {
@@ -29,7 +29,7 @@
   color: #2c3e50;
   padding: 20px;
   box-sizing: border-box;
-  width: 100%;
+  width: auto;
   height: 100vh;
 }
 

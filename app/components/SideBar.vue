@@ -1,6 +1,9 @@
 <template>
   <navbar class="sidebar-content">
-    <span>Olá, {{ userName }}!</span>
+    <div class="sidebar-header" style="display: flex; align-items: center; gap: 0.5rem;">
+      <span>Olá, {{ userName }}!</span>
+      <UAvatar :alt="userName" size="md" />
+    </div>
       <UButtonGroup orientation="vertical" class="sidebar-menu">
         <MiscMenuButton btn-text="Botão 1" />
         <MiscMenuButton btn-text="Botão 2" />
