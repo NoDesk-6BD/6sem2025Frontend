@@ -1,0 +1,38 @@
+.sidebar-menu {
+  gap: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-top: 20px;
+}
+
+.log_off-button {
+  margin-top: auto;   /* empurra para o fim da coluna */
+  align-self: flex-end;
+  color: var(--log_off-color);
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 10px;
+}
+
+
+.misc-menu-button {
+  width: 100%;
+  height: auto;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  background-color: aquamarine;
+  border-radius: 15px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.menu-button {
+  width: 100%;   /* se quiser botões ocupando toda a largura */
+  justify-content: flex-start;
+  cursor: pointer;
+}

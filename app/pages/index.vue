@@ -1,10 +1,6 @@
 <template>
-    <div class="container">
-      <div class="sidebar">
-        <sideBar />
-      </div>
-      <div class="main-content">
-        <MainContent />
-      </div>
-    </div>
+  <div  class="container">
+    <sideBar user-name="Usuário"/>
+    <MainContent />
+  </div>
 </template>
