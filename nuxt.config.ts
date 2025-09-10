@@ -5,8 +5,8 @@ export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@nuxt/ui', '@nuxt/test-utils'],
     css: [
         '~/assets/css/main.css',
-        '@/assets/css/SideBar.css',
-        '@/assets/css/dash.css'
+        '@/assets/css/ComponentAssets/SideBar.css',
+        '@/assets/css/ComponentAssets/MainContent.css'
 
     ]
 })

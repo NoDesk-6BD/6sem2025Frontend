@@ -8,8 +8,10 @@
 <script lang="ts" setup>
 import { defineProps } from 'vue';
 
+import type { Component } from 'vue';
+
 const props = defineProps<{
-  component: any,
+  component: string | Component,
   dashName: string
 }>();
 </script>

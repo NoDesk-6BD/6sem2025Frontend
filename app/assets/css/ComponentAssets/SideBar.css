@@ -1,3 +1,12 @@
+.sidebar-header{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 0.5rem;
+}
+
 .sidebar-menu {
   gap: 10px;
   padding-left: 10px;
@@ -5,9 +14,16 @@
   margin-top: 20px;
 }
 
+.log_off-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto; /* Push to bottom */
+  padding: 20px;
+  margin-bottom: 20px; /* Optional: space from bottom */
+}
+
 .log_off-button {
-  margin-top: auto;   /* empurra para o fim da coluna */
-  align-self: flex-end;
   color: var(--log_off-color);
   border: none;
   cursor: pointer;
