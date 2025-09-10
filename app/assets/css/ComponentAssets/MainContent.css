@@ -1,8 +1,45 @@
+
+/*
+ * Cartões de métricas
+ */
+
+.metrics-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: 10vh;
+  gap: var(--card_gap);
+  margin-bottom: 20px;
+}
+
+.metrics-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  height: auto;
+  padding: 10px;
+}
+
+.metrics-card-value {
+  font-size: 2em;
+}
+
+.metrics-card-title {
+  font-weight: bold;
+}
+
+
+/*
+ * Região dos gráficos
+ */
+
 .dash-boards {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 20px;
+  gap: var(--card_gap);
   background-color: #ecf0f1;
   color: #2c3e50;
   box-sizing: border-box;
@@ -14,27 +51,5 @@
   background-color: #f9f9f9;
   border: 1px solid #eee;
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 10px;
 }
-
-.metrics-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  height: 10vh;
-
-  gap: 20px;
-}
-
-.metrics-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  width: 100%;
-  height: auto;
-  padding: 10px 20px;
-}
-
-

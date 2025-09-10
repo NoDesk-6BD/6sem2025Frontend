@@ -1,6 +1,6 @@
 <template>
   <v-card class="dashboard-card" elevation="2">
-    <v-card-title>Dashboard {{ props.dashName }} Card</v-card-title>
+    <v-card-title>{{ props.dashName }}</v-card-title>
     <component :is="props.component" />
   </v-card>
 </template>

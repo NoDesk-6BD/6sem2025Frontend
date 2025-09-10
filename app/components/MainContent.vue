@@ -14,7 +14,7 @@
       <dash-base component="Dashboard3" dash-name="Dashboard 3" />
       <dash-base component="Dashboard4" dash-name="Dashboard 4" />
     </div>
-    
+
   </div>
 </template>
 

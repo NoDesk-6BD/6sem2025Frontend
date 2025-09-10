@@ -1,7 +1,7 @@
 <template>
   <v-card class="metrics-card" elevation="2">
-    <v-card-title>{{ props.tituloMetrica }}</v-card-title>
-    <v-card-text>{{ props.valorMetrica }}</v-card-text>
+    <v-card-text class="metrics-card-value">{{ props.valorMetrica }}</v-card-text>
+    <v-card-title class="metrics-card-title">{{ props.tituloMetrica }}</v-card-title>
   </v-card>
 </template>
 
