@@ -1,6 +1,9 @@
 <template>
   <div class="main-content">
-    <criticalProjects />
+    <dash-base />
+    <dash-base />
+    <dash-base />
+    <dash-base />
   </div>
 </template>
 

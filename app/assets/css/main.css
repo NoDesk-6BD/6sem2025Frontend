@@ -21,8 +21,11 @@
 }
 
 .main-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 20px;
   background-color: #ecf0f1;
-  justify-content: center;
   color: #2c3e50;
   padding: 20px;
   box-sizing: border-box;
