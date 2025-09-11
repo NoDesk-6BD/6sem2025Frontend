@@ -1,18 +1,23 @@
-<template>
-  <v-card class="metrics-card" elevation="2">
-    <v-card-text class="metrics-card-value">{{ props.valorMetrica }}</v-card-text>
-    <v-card-title class="metrics-card-title">{{ props.tituloMetrica }}</v-card-title>
-  </v-card>
-</template>
-
-<script lang="ts" setup>
-import { defineProps } from 'vue';
+<script setup lang="ts">
+import { defineProps } from 'vue'
 
 const props = defineProps<{
   tituloMetrica: string
   valorMetrica: string
-}>();
+}>()
 </script>
 
-<style>
-</style>
+<template>
+  <UCard class="bg-white shadow-md rounded-lg p-1">
+    <template #header>
+      <div class="text-gray-500 font-medium text-xs">
+        {{ props.tituloMetrica }}
+      </div>
+    </template>
+
+    <div class="text-base font-bold text-gray-900 mt-1">
+      {{ props.valorMetrica }}
+    </div>
+  </UCard>
+
+</template>
