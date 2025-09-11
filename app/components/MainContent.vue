@@ -1,5 +1,5 @@
 <template>
-  <div class="main-content">
+  <UContainer class="main-content">
 
     <div class="metrics-cards">
       <MetricsCard titulo-metrica="Metrica 1" valor-metrica="1"/>
@@ -15,7 +15,7 @@
       <dash-base component="Dashboard4" dash-name="Dashboard 4" />
     </div>
 
-  </div>
+  </UContainer>
 </template>
 
 <script lang="ts" setup>
