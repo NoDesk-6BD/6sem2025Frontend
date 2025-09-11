@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <h1>Bem vindo a pagina Inicial</h1>
-        <AppAlert>Testando o componente de alerta</AppAlert>
-    </div>
+  <div  class="grid grid-cols-9 gap-4">
+    <sideBar user-name="Usuário"/>
+    <MainContent class="col-span-8"/>
+  </div>
 </template>
