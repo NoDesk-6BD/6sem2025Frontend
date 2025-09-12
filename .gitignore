@@ -25,3 +25,5 @@ logs
 
 # editor
 .vscode
+
+.eslintcache
