@@ -47,6 +47,6 @@
 </template>
 
 <script setup lang="ts">
-import { useState } from "#imports";
-const collapsed = useState("sidebar-collapsed");
+import { ref } from "vue";
+const collapsed = ref(false);
 </script>
