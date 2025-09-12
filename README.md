@@ -55,10 +55,10 @@ npm run dev
 
 ## Tests
 
-- Uses `@nuxt/test-utils` for testing.
+- Uses **Vitest** for unit testing.
 
 ```bash
-npm run test
+npx vitest
 ```
 
 <br>

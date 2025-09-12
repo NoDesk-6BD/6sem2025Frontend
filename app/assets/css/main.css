@@ -1,2 +1,36 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+:root {
+  --ui-header-height: --spacing(16);
+  --log_off-color: #ffbbbb;
+  --card_gap: 20px;
+  --outer_menu_btn_color: rgb(67, 206, 141);
+  --inner_menu_btn_color: rgb(97, 224, 165);
+  --sidebar-btn-color: #ffffff;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 6fr; /* 1/7 e 6/7 */
+  height: 100vh;
+  width: 100vw;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.main-content {
+  display: grid;
+  grid-template-rows: 1fr 7fr;
+  background-color: #ecf0f1;
+  color: #2c3e50;
+  padding: 20px;
+  box-sizing: border-box;
+  width: auto;
+  height: auto;
+}
