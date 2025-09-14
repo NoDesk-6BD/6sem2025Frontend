@@ -30,10 +30,11 @@
         :relation="true"
       />
     </div>
+
     <div class="grid grid-cols-2 gap-5">
       <dash-base component="Dashboard1" dash-name="Dashboard 1" />
       <dash-base component="Dashboard2" dash-name="Dashboard 2" />
-      <dash-base component="Dashboard3" dash-name="Dashboard 3" />
+      <critical-projects dash-name="Projetos Críticos" />
       <dash-base component="Dashboard4" dash-name="Dashboard 4" />
     </div>
   </div>

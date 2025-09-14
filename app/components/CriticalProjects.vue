@@ -1,8 +1,21 @@
+<script setup lang="ts">
+import { defineProps } from "vue";
+
+const props = defineProps<{
+  dashName: string;
+}>();
+</script>
+
 <template>
-  <dash-base />
-  <h1>Card critical projects</h1>
+  <UCard class="bg-white shadow-md rounded-lg p-3 h-auto">
+    <template #header>
+      <div class="text-gray-500 font-medium text-sm">
+        {{ props.dashName }}
+      </div>
+    </template>
+
+    <div class="mt-2">
+      <ChartCriticalProjects />
+    </div>
+  </UCard>
 </template>
-
-<script lang="ts" setup></script>
-
-<style></style>

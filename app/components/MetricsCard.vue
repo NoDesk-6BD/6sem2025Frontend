@@ -36,9 +36,9 @@ const corValor = computed(() => {
 <template>
   <UCard class="bg-white shadow-md rounded-lg p-1">
     <template #header>
-      <div class="text-gray-500 font-medium text-xs">
+      <h1 class="text-gray-500 font-medium text-xs">
         {{ props.tituloMetrica }}
-      </div>
+      </h1>
     </template>
 
     <!-- use :class normalmente; troque para :style="estiloValor" se quiser testar -->
