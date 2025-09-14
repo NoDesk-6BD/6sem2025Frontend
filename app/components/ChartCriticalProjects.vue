@@ -7,17 +7,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted as vueOnMounted } from "vue";
+import { useFetch } from "#app";
+
+const toast = useToast();
+
+interface ChartApiResponse {
+  labels: string[];
+  label: string;
+  data: number[];
+}
+
+const { data: apiData, error } =
+  await useFetch<ChartApiResponse>("/api/your-endpoint");
+
+vueOnMounted(() => {
+  if (error.value) {
+    toast.add({ title: "Erro ao carregar dados do gráfico" });
+  }
+});
 
 const chartData = ref({
-  labels: [1, 2, 3, 4, 5],
+  labels: apiData.labels || [
+    "Projeto 1",
+    "Projeto 2",
+    "Projeto 3",
+    "Projeto 4",
+    "Projeto 5",
+  ],
   datasets: [
     {
-      label: "Teste1",
-      data: [2, 1, 7, 3, 2],
-      backgroundColor: "rgba(20, 255, 0, 0.3)",
-      borderColor: "rgba(100, 255, 0, 1)",
-      borderWidth: 2,
+      label: apiData.label || "Projetos Críticos",
+      data: apiData.data || [2, 1, 7, 3, 2],
+      backgroundColor: "#3480d6",
     },
   ],
 });
@@ -27,8 +49,12 @@ const chartOptions = ref({
   responsive: true,
   maintainAspectRatio: true,
   plugins: {
-    legend: { display: true },
+    legend: { display: false },
     title: { display: false, text: "Meu Gráfico" },
+  },
+  scales: {
+    x: { grid: { display: false } },
+    y: { grid: { display: false } },
   },
 });
 </script>
