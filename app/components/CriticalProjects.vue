@@ -14,7 +14,7 @@ const props = defineProps<{
       </div>
     </template>
 
-    <div class="mt-2">
+    <div>
       <ChartCriticalProjects />
     </div>
   </UCard>

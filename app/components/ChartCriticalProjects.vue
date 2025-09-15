@@ -1,5 +1,5 @@
 <template>
-  <div class="p-2 border border-gray-500 mt-4">
+  <div>
     <client-only>
       <BarChart :data="chartData" :options="chartOptions" />
     </client-only>
@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted as vueOnMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useFetch } from "#app";
 
 const toast = useToast();
@@ -21,27 +21,61 @@ interface ChartApiResponse {
 const { data: apiData, error } =
   await useFetch<ChartApiResponse>("/api/your-endpoint");
 
-vueOnMounted(() => {
+onMounted(() => {
   if (error.value) {
     toast.add({ title: "Erro ao carregar dados do gráfico" });
   }
 });
 
-const chartData = ref({
-  labels: apiData.labels || [
-    "Projeto 1",
-    "Projeto 2",
-    "Projeto 3",
-    "Projeto 4",
-    "Projeto 5",
-  ],
-  datasets: [
-    {
-      label: apiData.label || "Projetos Críticos",
-      data: apiData.data || [2, 1, 7, 3, 2],
-      backgroundColor: "#3480d6",
-    },
-  ],
+const formatLabel = (str: string, maxLength: number): string[] => {
+  const words = str.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    if (
+      (currentLine + " " + word).trim().length > maxLength &&
+      currentLine.length > 0
+    ) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = currentLine ? `${currentLine} ${word}` : word;
+    }
+  }
+  lines.push(currentLine);
+
+  if (lines.length <= 1) {
+    return lines;
+  }
+
+  const longestLineLength = Math.max(...lines.map((line) => line.length));
+  return lines.map((line) => line.padEnd(longestLineLength, " "));
+};
+
+const chartData = computed(() => {
+  const defaultLabels = [
+    "Prolead descrição de cargos",
+    "Prolead PDI",
+    "Prolead Express Yourself (Módulo para pesquisas)",
+    "Coremind (Sistema de gestão de conhecimento)",
+    "Guizo (Sistema de atendimento de clientes)",
+    "PVP (Sistema de remuneração variável a curto prazo)",
+  ];
+  const defaultData = [2, 1, 6, 3, 2, 4];
+
+  const labelsSource = apiData.value?.labels || defaultLabels;
+
+  return {
+    labels: labelsSource.map((label) => formatLabel(label, 18)),
+    datasets: [
+      {
+        label: apiData.value?.label || "Projetos Críticos",
+        data: apiData.value?.data || defaultData,
+        backgroundColor: "#3480d8",
+      },
+    ],
+  };
 });
 
 const chartOptions = ref({
@@ -50,11 +84,11 @@ const chartOptions = ref({
   maintainAspectRatio: true,
   plugins: {
     legend: { display: false },
-    title: { display: false, text: "Meu Gráfico" },
+    title: { display: false },
   },
   scales: {
-    x: { grid: { display: false } },
-    y: { grid: { display: false } },
+    x: { grid: { display: true, color: "#e9e9e9", borderDash: [2, 4] } },
+    y: { grid: { display: false }, ticks: { padding: 10 } },
   },
 });
 </script>
