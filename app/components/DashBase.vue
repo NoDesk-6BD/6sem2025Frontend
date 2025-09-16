@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import { defineProps } from "vue";
-import type { Component } from "vue";
 
 const props = defineProps<{
   dashName: string;
   titleStyle: string;
-  component: string | Component;
 }>();
 </script>
 
 <template>
-  <UCard class="bg-white shadow-md rounded-lg p-3 h-auto">
+  <UCard class="bg-white shadow-md rounded-lg p-3 max-h-[500px]">
     <template #header>
       <div :class="props.titleStyle">
         {{ props.dashName }}
@@ -18,7 +16,7 @@ const props = defineProps<{
     </template>
 
     <div class="mt-2">
-      <ExampleChart :dash-name="props.dashName" />
+      <slot />
     </div>
   </UCard>
 </template>

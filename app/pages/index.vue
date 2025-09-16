@@ -1,7 +1,3 @@
-<script setup>
-const chartTitleClass = "text-gray-500 font-medium text-xl";
-</script>
-
 <template>
   <div class="main-content">
     <div>
@@ -52,15 +48,78 @@ const chartTitleClass = "text-gray-500 font-medium text-xl";
         dash-name="Dashboard 2"
         :title-style="chartTitleClass"
       />
-      <critical-projects
-        dash-name="Projetos Críticos"
-        :title-style="chartTitleClass"
-      />
       <dash-base
-        component="Dashboard4"
-        dash-name="Dashboard 4"
+        component="Dashboard3"
+        dash-name="Dashboard 3"
         :title-style="chartTitleClass"
-      />
+      >
+        <ChartCriticalProjects dash-name="Dashboard 3" />
+      </dash-base>
+
+      <dash-base dash-name="Chamados Críticos" :title-style="chartTitleClass">
+        <DoughnutChart :data="chartData" :options="chartOptions" />
+      </dash-base>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
+import type { ChartData, ChartOptions } from "chart.js";
+import DoughnutChart from "~/components/DoughnutChart.vue";
+
+const chartTitleClass = "text-gray-500 font-medium text-xl";
+
+interface Category {
+  id: string;
+  name: string;
+  count: number;
+}
+
+const chartData = ref<ChartData<"doughnut", number[], string>>({
+  labels: [],
+  datasets: [],
+});
+
+const chartOptions = ref<ChartOptions<"doughnut">>({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: true, position: "top" },
+    title: { display: true, text: "Chamados por Categoria Crítica" },
+  },
+});
+
+const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
+
+async function fetchCategories() {
+  try {
+    const config = useRuntimeConfig();
+
+    const res = await $fetch<Category[]>(`${config.public.apiBase}/categories`);
+
+    if (!res || !Array.isArray(res)) {
+      console.error("Resposta inválida do backend:", res);
+      return;
+    }
+
+    chartData.value = {
+      labels: res.map((c) => c.name),
+      datasets: [
+        {
+          label: "Chamados",
+          data: res.map((c) => c.count),
+          backgroundColor: colors.slice(0, res.length), // pega só o necessário
+          borderWidth: 1,
+        },
+      ],
+    };
+  } catch (error) {
+    console.error("Erro ao buscar categorias:", error);
+  }
+}
+
+onMounted(() => {
+  fetchCategories();
+});
+</script>
