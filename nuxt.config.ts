@@ -9,4 +9,9 @@ export default defineNuxtConfig({
     "@/assets/css/ComponentAssets/MainContent.css",
   ],
   plugins: ["@/plugins/chart.js"],
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE,
+    },
+  },
 });
