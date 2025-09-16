@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Bar } from "vue-chartjs";
+import type { ChartData, ChartOptions } from "chart.js";
 
 defineProps<{
-  data: object;
-  options?: object;
+  data: ChartData<"bar", number[], string>;
+  options?: ChartOptions<"bar">;
 }>();
 </script>
 
