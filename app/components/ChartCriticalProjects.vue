@@ -82,13 +82,22 @@ const chartOptions = ref({
   indexAxis: "y", // Adiciona esta linha para barras laterais (horizontal)
   responsive: true,
   maintainAspectRatio: true,
+  aspectRatio: 1.5,
   plugins: {
     legend: { display: false },
     title: { display: false },
   },
   scales: {
-    x: { grid: { display: true, color: "#e9e9e9", borderDash: [2, 4] } },
-    y: { grid: { display: false }, ticks: { padding: 10 } },
+    x: {
+      grid: { display: false },
+    },
+    y: {
+      grid: { display: false },
+      ticks: {
+        padding: 5,
+        crossAlign: "far",
+      },
+    },
   },
 });
 </script>
