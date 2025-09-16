@@ -4,6 +4,7 @@ import type { Component } from "vue";
 
 const props = defineProps<{
   dashName: string;
+  titleStyle: string;
   component: string | Component;
 }>();
 </script>
@@ -11,13 +12,13 @@ const props = defineProps<{
 <template>
   <UCard class="bg-white shadow-md rounded-lg p-3 h-auto">
     <template #header>
-      <div class="text-gray-500 font-medium text-sm">
+      <div :class="props.titleStyle">
         {{ props.dashName }}
       </div>
     </template>
 
     <div class="mt-2">
-      <ExampleChart />
+      <ExampleChart :dash-name="props.dashName" />
     </div>
   </UCard>
 </template>

@@ -1,3 +1,7 @@
+<script setup>
+const chartTitleClass = "text-gray-500 font-medium text-xl";
+</script>
+
 <template>
   <div class="main-content">
     <div class="grid grid-cols-4 gap-5 mb-7">
@@ -32,10 +36,25 @@
     </div>
 
     <div class="grid grid-cols-2 gap-5">
-      <dash-base component="Dashboard1" dash-name="Dashboard 1" />
-      <dash-base component="Dashboard2" dash-name="Dashboard 2" />
-      <critical-projects dash-name="Projetos Críticos" />
-      <dash-base component="Dashboard4" dash-name="Dashboard 4" />
+      <dash-base
+        component="Dashboard1"
+        dash-name="Dashboard 1"
+        :title-style="chartTitleClass"
+      />
+      <dash-base
+        component="Dashboard2"
+        dash-name="Dashboard 2"
+        :title-style="chartTitleClass"
+      />
+      <critical-projects
+        dash-name="Projetos Críticos"
+        :title-style="chartTitleClass"
+      />
+      <dash-base
+        component="Dashboard4"
+        dash-name="Dashboard 4"
+        :title-style="chartTitleClass"
+      />
     </div>
   </div>
 </template>

@@ -7,8 +7,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, defineProps } from "vue";
 import { useFetch } from "#app";
+
+const props = defineProps<{
+  dashName: string;
+}>();
 
 const toast = useToast();
 
@@ -23,7 +27,7 @@ const { data: apiData, error } =
 
 onMounted(() => {
   if (error.value) {
-    toast.add({ title: "Erro ao carregar dados do gráfico" });
+    toast.add({ title: `Erro ao carregar dados do gráfico ${props.dashName}` });
   }
 });
 
