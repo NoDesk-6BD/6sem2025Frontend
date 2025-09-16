@@ -37,7 +37,7 @@
       <dash-base component="Dashboard3" dash-name="Dashboard 3" />
 
       <dash-base dash-name="Chamados Críticos">
-        <BarChart :data="chartData" :options="chartOptions" />
+        <DoughnutChart :data="chartData" :options="chartOptions" />
       </dash-base>
     </div>
   </div>
@@ -46,6 +46,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
+import DoughnutChart from "~/components/DoughnutChart.vue";
 
 interface Category {
   id: string;
@@ -53,19 +54,21 @@ interface Category {
   count: number;
 }
 
-const chartData = ref<ChartData<"bar", number[], string>>({
+const chartData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
   datasets: [],
 });
 
-const chartOptions = ref<ChartOptions<"bar">>({
+const chartOptions = ref<ChartOptions<"doughnut">>({
   responsive: true,
-  indexAxis: "y",
+  maintainAspectRatio: false,
   plugins: {
-    legend: { display: false },
+    legend: { display: true, position: "top" },
     title: { display: true, text: "Chamados por Categoria Crítica" },
   },
 });
+
+const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
 
 async function fetchCategories() {
   try {
@@ -84,7 +87,8 @@ async function fetchCategories() {
         {
           label: "Chamados",
           data: res.map((c) => c.count),
-          backgroundColor: "#FF5252",
+          backgroundColor: colors.slice(0, res.length), // pega só o necessário
+          borderWidth: 1,
         },
       ],
     };
