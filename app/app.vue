@@ -9,5 +9,6 @@
     </UMain>
 
     <UFooter />
+    <UNotifications />
   </UApp>
 </template>

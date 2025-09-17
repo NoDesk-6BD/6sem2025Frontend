@@ -1,13 +1,24 @@
 <script setup lang="ts">
 import { Doughnut } from "vue-chartjs";
+import { ref, defineProps } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
 
+const chartOptions = ref<ChartOptions<"doughnut">>({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: true, position: "top" },
+    title: { display: true, text: "Chamados por Categoria Crítica" },
+  },
+});
+
 defineProps<{
-  data: ChartData<"doughnut", number[], string>;
-  options?: ChartOptions<"doughnut">;
+  chartData: ChartData<"doughnut", number[], string>;
 }>();
 </script>
 
 <template>
-  <Doughnut :data="data" :options="options" />
+  <client-only>
+    <Doughnut :data="chartData" :options="chartOptions" />
+  </client-only>
 </template>
