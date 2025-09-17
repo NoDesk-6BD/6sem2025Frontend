@@ -38,25 +38,19 @@
     </div>
 
     <div class="grid grid-cols-2 gap-5">
+      <dash-base dash-name="Dashboard 1" :title-style="chartTitleClass" />
+      <dash-base dash-name="Dashboard 2" :title-style="chartTitleClass" />
       <dash-base
-        component="Dashboard1"
-        dash-name="Dashboard 1"
-        :title-style="chartTitleClass"
-      />
-      <dash-base
-        component="Dashboard2"
-        dash-name="Dashboard 2"
-        :title-style="chartTitleClass"
-      />
-      <dash-base
-        component="Dashboard3"
-        dash-name="Dashboard 3"
+        :dash-name="dashNameList[2] ?? ''"
         :title-style="chartTitleClass"
       >
-        <ChartCriticalProjects dash-name="Dashboard 3" />
+        <ChartCriticalProjects :dash-name="dashNameList[2] ?? ''" />
       </dash-base>
 
-      <dash-base dash-name="Chamados Críticos" :title-style="chartTitleClass">
+      <dash-base
+        :dash-name="dashNameList[3] ?? ''"
+        :title-style="chartTitleClass"
+      >
         <DoughnutChart :data="chartData" :options="chartOptions" />
       </dash-base>
     </div>
@@ -67,8 +61,18 @@
 import { ref, onMounted } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
 import DoughnutChart from "~/components/DoughnutChart.vue";
+import { useToast, useRuntimeConfig } from "#imports";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
+
+const dashNameList = [
+  "Dashboard 1",
+  "Dashboard 2",
+  "Projetos Críticos",
+  "Chamados Críticos",
+];
+
+const toast = useToast();
 
 interface Category {
   id: string;
@@ -100,6 +104,9 @@ async function fetchCategories() {
 
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
+      toast.add({
+        title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+      });
       return;
     }
 

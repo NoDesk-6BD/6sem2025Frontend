@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, defineProps } from "vue";
 import { useFetch } from "#app";
+import { useToast } from "#imports";
 
 const props = defineProps<{
   dashName: string;
