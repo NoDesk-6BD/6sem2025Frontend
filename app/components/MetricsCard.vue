@@ -36,7 +36,7 @@ const corValor = computed(() => {
 <template>
   <UCard class="bg-white shadow-md rounded-lg p-1">
     <template #header>
-      <h1 class="text-gray-500 font-medium text-xs">
+      <h1 class="text-gray-500 font-medium text-xl">
         {{ props.tituloMetrica }}
       </h1>
     </template>

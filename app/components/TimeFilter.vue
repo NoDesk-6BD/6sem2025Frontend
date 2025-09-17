@@ -39,7 +39,9 @@
       </template>
     </UPopover>
 
-    <UButton class="col-span-2 col-start-1" color="neutral">Aplicar</UButton>
+    <UButton class="col-span-2 col-start-1" color="neutral">
+      <span class="menu-button-label">Aplicar</span>
+    </UButton>
   </div>
 </template>
 

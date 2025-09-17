@@ -15,7 +15,7 @@ const props = defineProps<{
       </div>
     </template>
 
-    <div class="mt-2">
+    <div class="mt-0">
       <slot />
     </div>
   </UCard>

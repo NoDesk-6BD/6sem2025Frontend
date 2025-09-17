@@ -48,8 +48,8 @@
 }
 
 .menu-button-label {
-  color: var(--sidebar-btn-color);
-  width: 100%;
+  color: var(--search-btn-color);
+  width: auto;
   justify-content: flex-start;
   cursor: pointer;
   border-radius: 5px;
@@ -57,11 +57,11 @@
 }
 
 .menu-button-label:hover {
-  background: radial-gradient(
-    circle,
-    var(--inner_menu_btn_color) 30%,
-    var(--outer_menu_btn_color) 100%
-  );
-  color: var(--sidebar-btn-hover-color, #333333);
+  background: radial-gradient;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.menu-button-label:active {
+  background-color: #d1d5db;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
