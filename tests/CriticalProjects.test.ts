@@ -1,9 +1,9 @@
 import { mount } from "@vue/test-utils";
-import CriticalProjects from "../app/components/CriticalProjects.vue";
+import ChartCriticalProjects from "../app/components/ChartCriticalProjects.vue";
 
-describe("CriticalProjects", () => {
+describe("ChartCriticalProjects", () => {
   it("renders correctly", () => {
-    const wrapper = mount(CriticalProjects);
+    const wrapper = mount(ChartCriticalProjects);
     expect(wrapper.exists()).toBe(true);
   });
 });
