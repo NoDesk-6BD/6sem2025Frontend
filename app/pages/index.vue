@@ -39,8 +39,17 @@
     </div>
 
     <div class="grid grid-cols-2 gap-5 max-h-[600px]">
-      <dash-base dash-name="Dashboard 1" :title-style="chartTitleClass" />
-      <dash-base dash-name="Dashboard 2" :title-style="chartTitleClass" />
+      <dash-base
+        :dash-name="dashNameList[0] ?? ''"
+        :title-style="chartTitleClass"
+      >
+        <ChartTicketsByCategory :chart-data="TicketsByCategoryData" />
+      </dash-base>
+
+      <dash-base
+        :dash-name="dashNameList[1] ?? ''"
+        :title-style="chartTitleClass"
+      />
 
       <dash-base
         :dash-name="dashNameList[2] ?? ''"
@@ -67,7 +76,7 @@ import { useToast, useRuntimeConfig } from "#imports";
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 const dashNameList = [
-  "Dashboard 1",
+  "Chamados por Categoria",
   "Dashboard 2",
   "Projetos Críticos",
   "Chamados Críticos",
@@ -87,6 +96,10 @@ const CriticalTicketsData = ref<ChartData<"doughnut", number[], string>>({
 });
 
 const criticalProjectsData = ref<ChartData<"bar", number[], string>>({
+  datasets: [],
+});
+
+const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   datasets: [],
 });
 
@@ -160,6 +173,53 @@ async function fetchCriticalProjects() {
   }
 }
 
+async function fetchTicketsByCategory() {
+  try {
+    const config = useRuntimeConfig();
+
+    const res = await $fetch<Category[]>(
+      `${config.public.apiBase}/tickets_by_category`,
+    );
+
+    if (!res || !Array.isArray(res)) {
+      console.error("Resposta inválida do backend:", res);
+      toast.add({
+        title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+      });
+      return;
+    }
+
+    TicketsByCategoryData.value = {
+      labels: res.map((c) => c.name),
+      datasets: [
+        {
+          label: "Linha 1",
+          data: res.map((c) => c.count1 ?? 0),
+          borderWidth: 1,
+          backgroundColor: "#3480d8",
+        },
+        {
+          label: "Linha 2",
+          data: res.map((c) => c.count2 ?? 0),
+          borderWidth: 1,
+          backgroundColor: "#36A2EB",
+        },
+        {
+          label: "Linha 3",
+          data: res.map((c) => c.count3 ?? 0),
+          borderWidth: 1,
+          backgroundColor: "#FFCE56",
+        },
+      ],
+    };
+  } catch (error) {
+    console.error("Erro ao buscar categorias:", error);
+    toast.add({
+      title: `Erro ao carregar dados do gráfico ${dashNameList[0] ?? ""}`,
+    });
+  }
+}
+
 const formatLabel = (str: string, maxLength: number): string[] => {
   const words = str.split(" ");
   const lines: string[] = [];
@@ -189,5 +249,6 @@ const formatLabel = (str: string, maxLength: number): string[] => {
 onMounted(() => {
   fetchCategories();
   fetchCriticalProjects();
+  fetchTicketsByCategory();
 });
 </script>
