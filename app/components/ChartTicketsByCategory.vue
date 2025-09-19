@@ -1,25 +1,25 @@
 <template>
   <div>
     <client-only>
-      <LineChart :data="chartData" :options="chartOptions" />
+      <LineChart :data="props.chartData" :options="chartOptions" />
     </client-only>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, onMounted } from "vue";
+import { ref, defineProps } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
 
-const { chartData } = defineProps<{
+const props = defineProps<{
   chartData: ChartData<"line", number[], string>;
 }>();
 
 const chartOptions = ref<ChartOptions<"line">>({
   responsive: true,
   maintainAspectRatio: true,
-  aspectRatio: 2,
+  aspectRatio: 2.3,
   plugins: {
-    legend: { display: false },
+    legend: { display: true },
     title: { display: false },
   },
   scales: {
@@ -27,11 +27,16 @@ const chartOptions = ref<ChartOptions<"line">>({
       grid: { display: false },
     },
     y: {
-      grid: { display: false },
+      grid: { display: true },
+      ticks: {
+        stepSize: 2,
+      },
     },
   },
-});
-onMounted(() => {
-  console.log(`chart da ==`, chartData);
+  elements: {
+    line: {
+      borderWidth: 3,
+    },
+  },
 });
 </script>

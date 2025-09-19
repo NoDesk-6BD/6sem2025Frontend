@@ -5,6 +5,8 @@ import {
   Tooltip,
   Legend,
   BarElement,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
   ArcElement,
@@ -17,6 +19,8 @@ export default defineNuxtPlugin(() => {
     Tooltip,
     Legend,
     BarElement,
+    LineElement, // <- necessário para gráficos de linha
+    PointElement, // <- necessário para pontos (scatter/line)
     CategoryScale,
     LinearScale,
     ArcElement,

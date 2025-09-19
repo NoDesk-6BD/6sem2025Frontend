@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import { ref, defineProps } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
+
 const props = defineProps<{
   chartData: ChartData<"bar", number[], string>;
 }>();

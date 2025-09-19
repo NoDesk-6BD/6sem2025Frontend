@@ -38,8 +38,9 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-5 max-h-[600px]">
+    <div id="charts" class="grid grid-cols-2 gap-5">
       <dash-base
+        class="col-span-2 col-start-1"
         :dash-name="dashNameList[0] ?? ''"
         :title-style="chartTitleClass"
       >
@@ -47,16 +48,16 @@
       </dash-base>
 
       <dash-base
-        :dash-name="dashNameList[1] ?? ''"
-        :title-style="chartTitleClass"
-      />
-
-      <dash-base
         :dash-name="dashNameList[2] ?? ''"
         :title-style="chartTitleClass"
       >
         <ChartCriticalProjects :chart-data="criticalProjectsData" />
       </dash-base>
+
+      <dash-base
+        :dash-name="dashNameList[1] ?? ''"
+        :title-style="chartTitleClass"
+      />
 
       <dash-base
         :dash-name="dashNameList[3] ?? ''"
@@ -88,6 +89,12 @@ interface Category {
   id: string;
   name: string;
   count: number;
+  label1: string;
+  label2: string;
+  label3: string;
+  count1?: number;
+  count2?: number;
+  count3?: number;
 }
 
 const CriticalTicketsData = ref<ChartData<"doughnut", number[], string>>({
@@ -100,12 +107,13 @@ const criticalProjectsData = ref<ChartData<"bar", number[], string>>({
 });
 
 const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
+  labels: [],
   datasets: [],
 });
 
-async function fetchCategories() {
-  const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
+const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
 
+async function fetchCategories() {
   try {
     const config = useRuntimeConfig();
 
@@ -175,6 +183,21 @@ async function fetchCriticalProjects() {
 
 async function fetchTicketsByCategory() {
   try {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
     const config = useRuntimeConfig();
 
     const res = await $fetch<Category[]>(
@@ -190,25 +213,25 @@ async function fetchTicketsByCategory() {
     }
 
     TicketsByCategoryData.value = {
-      labels: res.map((c) => c.name),
+      labels: months,
       datasets: [
         {
-          label: "Linha 1",
-          data: res.map((c) => c.count1 ?? 0),
-          borderWidth: 1,
-          backgroundColor: "#3480d8",
+          label: res[0]?.label1 ?? "",
+          data: Array.isArray(res[0]?.count1) ? res[0].count1 : [],
+          borderColor: colors[0],
+          backgroundColor: colors[0],
         },
         {
-          label: "Linha 2",
-          data: res.map((c) => c.count2 ?? 0),
-          borderWidth: 1,
-          backgroundColor: "#36A2EB",
+          label: res[1]?.label2 ?? "",
+          data: Array.isArray(res[1]?.count2) ? res[1].count2 : [],
+          borderColor: colors[1],
+          backgroundColor: colors[1],
         },
         {
-          label: "Linha 3",
-          data: res.map((c) => c.count3 ?? 0),
-          borderWidth: 1,
-          backgroundColor: "#FFCE56",
+          label: res[2]?.label3 ?? "",
+          data: Array.isArray(res[2]?.count3) ? res[2].count3 : [],
+          borderColor: colors[2],
+          backgroundColor: colors[2],
         },
       ],
     };

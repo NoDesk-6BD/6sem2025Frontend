@@ -8,7 +8,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <UCard class="bg-white shadow-md rounded-lg p-3 max-h-[500px]">
+  <UCard class="bg-white shadow-md rounded-lg p-3">
     <template #header>
       <div :class="props.titleStyle">
         {{ props.dashName }}
