@@ -6,9 +6,10 @@ import type { ChartData, ChartOptions } from "chart.js";
 const chartOptions = ref<ChartOptions<"doughnut">>({
   responsive: true,
   maintainAspectRatio: false,
+  aspectRatio: 0.8,
   plugins: {
-    legend: { display: true, position: "top" },
-    title: { display: true, text: "Chamados por Categoria Crítica" },
+    legend: { display: true, position: "left" },
+    title: { display: false },
   },
 });
 

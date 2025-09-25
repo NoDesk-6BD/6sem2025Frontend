@@ -34,15 +34,14 @@ const corValor = computed(() => {
 </script>
 
 <template>
-  <UCard class="bg-white shadow-md rounded-lg p-1">
+  <UCard class="bg-white shadow-md rounded-lg">
     <template #header>
       <h1 class="text-gray-500 font-medium text-xl">
         {{ props.tituloMetrica }}
       </h1>
     </template>
 
-    <!-- use :class normalmente; troque para :style="estiloValor" se quiser testar -->
-    <div class="text-2xl font-bold mt-1" :class="corValor">
+    <div class="text-2xl font-bold" :class="corValor">
       {{ props.valorMetrica }}
     </div>
   </UCard>

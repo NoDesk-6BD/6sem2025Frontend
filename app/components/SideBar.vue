@@ -12,6 +12,7 @@
         ☰
       </button>
     </div>
+
     <div v-else class="p-4 flex justify-start">
       <button
         class="text-white text-2xl p-1 hover:bg-gray-700 rounded"

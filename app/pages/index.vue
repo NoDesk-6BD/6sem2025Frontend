@@ -1,5 +1,5 @@
 <template>
-  <div class="main-content">
+  <div class="flex flex-col p-5 main-content">
     <div>
       <div class="grid grid-cols-2 mb-7">
         <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
@@ -55,11 +55,6 @@
       </dash-base>
 
       <dash-base
-        :dash-name="dashNameList[1] ?? ''"
-        :title-style="chartTitleClass"
-      />
-
-      <dash-base
         :dash-name="dashNameList[3] ?? ''"
         :title-style="chartTitleClass"
       >
@@ -106,7 +101,7 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   datasets: [],
 });
 
-const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
+const colors = ["#FF6384", "#3480d8", "#FFCE56", "#4BC0C0", "#9966FF"];
 
 async function fetchCategories() {
   try {
@@ -164,7 +159,7 @@ async function fetchCriticalProjects() {
           label: "Projetos Críticos",
           data: res.flatMap((c) => c.count ?? 0),
           borderWidth: 1,
-          backgroundColor: "#3480d8",
+          backgroundColor: colors[1],
         },
       ],
     };
