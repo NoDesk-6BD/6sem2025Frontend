@@ -88,13 +88,8 @@ const toast = useToast();
 interface Category {
   id: string;
   name: string;
-  count: number;
-  label1: string;
-  label2: string;
-  label3: string;
-  count1?: number;
-  count2?: number;
-  count3?: number;
+  count: number[];
+  abscissa: string[];
 }
 
 const CriticalTicketsData = ref<ChartData<"doughnut", number[], string>>({
@@ -132,7 +127,7 @@ async function fetchCategories() {
       datasets: [
         {
           label: "Chamados",
-          data: res.map((c) => c.count),
+          data: res.flatMap((c) => c.count),
           backgroundColor: colors.slice(0, res.length), // pega só o necessário
           borderWidth: 1,
         },
@@ -163,11 +158,11 @@ async function fetchCriticalProjects() {
     }
 
     criticalProjectsData.value = {
-      labels: res.map((c) => c.name).map((label) => formatLabel(label, 18)),
+      labels: res.map((c) => formatLabel(c.name, 18).join(" ")),
       datasets: [
         {
           label: "Projetos Críticos",
-          data: res.map((c) => c.count),
+          data: res.flatMap((c) => c.count ?? 0),
           borderWidth: 1,
           backgroundColor: "#3480d8",
         },
@@ -183,21 +178,6 @@ async function fetchCriticalProjects() {
 
 async function fetchTicketsByCategory() {
   try {
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
     const config = useRuntimeConfig();
 
     const res = await $fetch<Category[]>(
@@ -212,24 +192,39 @@ async function fetchTicketsByCategory() {
       return;
     }
 
+    const LabelList: string[] = res.map((c) => c.name);
+    const ValueList = res.map((c) => c.count);
+    const abscissa = res.map((c) => c.abscissa);
+
+    console.log("abcissa", abscissa);
+
     TicketsByCategoryData.value = {
-      labels: months,
+      labels: abscissa[2] ?? [],
       datasets: [
         {
-          label: res[0]?.label1 ?? "",
-          data: Array.isArray(res[0]?.count1) ? res[0].count1 : [],
+          label: LabelList[0]?.[0] ?? "",
+          data:
+            ValueList[1] && Array.isArray(ValueList[1][0])
+              ? ValueList[1][0]
+              : [],
           borderColor: colors[0],
           backgroundColor: colors[0],
         },
         {
-          label: res[1]?.label2 ?? "",
-          data: Array.isArray(res[1]?.count2) ? res[1].count2 : [],
+          label: LabelList[0]?.[1] ?? "",
+          data:
+            ValueList[1] && Array.isArray(ValueList[1][1])
+              ? ValueList[1][1]
+              : [],
           borderColor: colors[1],
           backgroundColor: colors[1],
         },
         {
-          label: res[2]?.label3 ?? "",
-          data: Array.isArray(res[2]?.count3) ? res[2].count3 : [],
+          label: LabelList[0]?.[2] ?? "",
+          data:
+            ValueList[1] && Array.isArray(ValueList[1][2])
+              ? ValueList[1][2]
+              : [],
           borderColor: colors[2],
           backgroundColor: colors[2],
         },
