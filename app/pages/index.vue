@@ -6,7 +6,7 @@
         <TimeFilter />
       </div>
 
-      <div class="grid grid-cols-4 gap-5 mb-7">
+      <div class="grid grid-cols-4 gap-5 mb-5">
         <MetricsCard
           titulo-metrica="Metrica 1"
           :valor-metrica="15"
@@ -48,17 +48,17 @@
       </dash-base>
 
       <dash-base
-        :dash-name="dashNameList[2] ?? ''"
+        :dash-name="dashNameList[1] ?? ''"
         :title-style="chartTitleClass"
       >
-        <ChartCriticalProjects :chart-data="criticalProjectsData" />
+        <ChartCriticalProjects :chart-data="CriticalProjectsData" />
       </dash-base>
 
       <dash-base
-        :dash-name="dashNameList[3] ?? ''"
+        :dash-name="dashNameList[2] ?? ''"
         :title-style="chartTitleClass"
       >
-        <DoughnutChart :chart-data="CriticalTicketsData" />
+        <ChartCriticalCategories :chart-data="CriticalCategoriesData" />
       </dash-base>
     </div>
   </div>
@@ -68,14 +68,16 @@
 import { ref, onMounted } from "vue";
 import type { ChartData } from "chart.js";
 import { useToast, useRuntimeConfig } from "#imports";
+import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
+import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
+import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 const dashNameList = [
   "Chamados por Categoria",
-  "Dashboard 2",
   "Projetos Críticos",
-  "Chamados Críticos",
+  "Categorias Críticas",
 ];
 
 const toast = useToast();
@@ -87,12 +89,13 @@ interface Category {
   abscissa: string[];
 }
 
-const CriticalTicketsData = ref<ChartData<"doughnut", number[], string>>({
+const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
   datasets: [],
 });
 
-const criticalProjectsData = ref<ChartData<"bar", number[], string>>({
+const CriticalProjectsData = ref<ChartData<"bar", number[], string>>({
+  labels: [],
   datasets: [],
 });
 
@@ -101,9 +104,22 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   datasets: [],
 });
 
-const colors = ["#FF6384", "#3480d8", "#FFCE56", "#4BC0C0", "#9966FF"];
+const colorsDoughnut = ["#005691", "#2C89C9", "#1E78B6", "#0F67A4", "#3B9ADB"];
 
-async function fetchCategories() {
+const colors = [
+  "#1E78B6", // Azul
+  "#EF4444", // Vermelho
+  "#10B981", // Verde
+  "#F59E0B", // Amarelo
+  "#8B5CF6", // Roxo
+  "#EC4899", // Rosa
+  "#14B8A6", // Turquesa
+  "#F97316", // Laranja
+  "#6366F1", // Indigo
+  "#E11D48", // Vermelho Escuro
+];
+
+async function fetchCriticalCategories() {
   try {
     const config = useRuntimeConfig();
 
@@ -112,18 +128,18 @@ async function fetchCategories() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico ${dashNameList[2] ?? ""}`,
       });
       return;
     }
 
-    CriticalTicketsData.value = {
+    CriticalCategoriesData.value = {
       labels: res.map((c) => c.name),
       datasets: [
         {
-          label: "Chamados",
+          label: "Categorias Críticas",
           data: res.flatMap((c) => c.count),
-          backgroundColor: colors.slice(0, res.length), // pega só o necessário
+          backgroundColor: colorsDoughnut.slice(0, res.length), // pega só o necessário
           borderWidth: 1,
         },
       ],
@@ -131,7 +147,7 @@ async function fetchCategories() {
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
-      title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+      title: `Erro ao carregar dados do gráfico ${dashNameList[2] ?? ""}`,
     });
   }
 }
@@ -147,26 +163,26 @@ async function fetchCriticalProjects() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico ${dashNameList[1] ?? ""}`,
       });
       return;
     }
 
-    criticalProjectsData.value = {
+    CriticalProjectsData.value = {
       labels: res.map((c) => formatLabel(c.name, 18).join(" ")),
       datasets: [
         {
           label: "Projetos Críticos",
           data: res.flatMap((c) => c.count ?? 0),
           borderWidth: 1,
-          backgroundColor: colors[1],
+          backgroundColor: colors[0],
         },
       ],
     };
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
-      title: `Erro ao carregar dados do gráfico ${dashNameList[2] ?? ""}`,
+      title: `Erro ao carregar dados do gráfico ${dashNameList[1] ?? ""}`,
     });
   }
 }
@@ -182,7 +198,7 @@ async function fetchTicketsByCategory() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico ${dashNameList[0] ?? ""}`,
       });
       return;
     }
@@ -220,8 +236,8 @@ async function fetchTicketsByCategory() {
             ValueList[1] && Array.isArray(ValueList[1][2])
               ? ValueList[1][2]
               : [],
-          borderColor: colors[2],
-          backgroundColor: colors[2],
+          borderColor: colors[3],
+          backgroundColor: colors[3],
         },
       ],
     };
@@ -260,8 +276,8 @@ const formatLabel = (str: string, maxLength: number): string[] => {
 };
 
 onMounted(() => {
-  fetchCategories();
-  fetchCriticalProjects();
   fetchTicketsByCategory();
+  fetchCriticalProjects();
+  fetchCriticalCategories();
 });
 </script>

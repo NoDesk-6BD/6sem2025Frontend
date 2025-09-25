@@ -19,15 +19,24 @@ const chartOptions = ref<ChartOptions<"line">>({
   maintainAspectRatio: true,
   aspectRatio: 4,
   plugins: {
-    legend: { display: true },
-    title: { display: false },
+    legend: {
+      position: "top",
+      display: true,
+    },
+    title: {
+      display: false,
+    },
   },
   scales: {
     x: {
-      grid: { display: false },
+      grid: {
+        display: false,
+      },
     },
     y: {
-      grid: { display: true },
+      grid: {
+        display: true,
+      },
       ticks: {
         stepSize: 2,
       },
