@@ -17,7 +17,7 @@ const props = defineProps<{
 const chartOptions = ref<ChartOptions<"line">>({
   responsive: true,
   maintainAspectRatio: true,
-  aspectRatio: 4,
+  aspectRatio: 5.5,
   plugins: {
     legend: {
       position: "top",

@@ -17,7 +17,7 @@ const props = defineProps<{
 const chartOptions = ref<ChartOptions<"doughnut">>({
   responsive: true,
   maintainAspectRatio: true,
-  aspectRatio: 1.9,
+  aspectRatio: 2.1,
   plugins: {
     legend: {
       position: "right",

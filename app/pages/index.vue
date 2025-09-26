@@ -1,44 +1,44 @@
 <template>
-  <div class="flex flex-col p-5 main-content">
+  <div class="flex flex-col p-4 main-content">
     <div>
-      <div class="grid grid-cols-2 mb-7">
+      <div class="grid grid-cols-2 mb-4">
         <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
         <TimeFilter />
       </div>
 
-      <div class="grid grid-cols-4 gap-5 mb-5">
+      <div class="grid grid-cols-4 gap-4 mb-4">
         <MetricsCard
-          titulo-metrica="Metrica 1"
-          :valor-metrica="15"
-          :bottom-limit="3"
+          titulo-metrica="Métrica 1"
+          :valor-metrica="3"
+          :bottom-limit="4"
           :top-limit="10"
           :relation="true"
         />
         <MetricsCard
-          titulo-metrica="Metrica 2"
-          :valor-metrica="31"
+          titulo-metrica="Métrica 2"
+          :valor-metrica="6"
           :bottom-limit="3"
           :top-limit="10"
           :relation="false"
         />
         <MetricsCard
-          titulo-metrica="Metrica 3"
-          :valor-metrica="77"
+          titulo-metrica="Métrica 3"
+          :valor-metrica="9"
           :bottom-limit="3"
           :top-limit="10"
           :relation="true"
         />
         <MetricsCard
-          titulo-metrica="Metrica 4"
-          :valor-metrica="42"
-          :bottom-limit="40"
-          :top-limit="50"
+          titulo-metrica="Métrica 4"
+          :valor-metrica="12"
+          :bottom-limit="5"
+          :top-limit="10"
           :relation="true"
         />
       </div>
     </div>
 
-    <div id="charts" class="grid grid-cols-2 gap-5">
+    <div id="charts" class="grid grid-cols-2 gap-4">
       <dash-base
         class="col-span-2 col-start-1"
         :dash-name="dashNameList[0] ?? ''"
@@ -128,7 +128,7 @@ async function fetchCriticalCategories() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[2] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[2] ?? ""}`,
       });
       return;
     }
@@ -147,7 +147,7 @@ async function fetchCriticalCategories() {
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
-      title: `Erro ao carregar dados do gráfico ${dashNameList[2] ?? ""}`,
+      title: `Erro ao carregar dados do gráfico: ${dashNameList[2] ?? ""}`,
     });
   }
 }
@@ -163,7 +163,7 @@ async function fetchCriticalProjects() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[1] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
       });
       return;
     }
@@ -182,7 +182,7 @@ async function fetchCriticalProjects() {
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
-      title: `Erro ao carregar dados do gráfico ${dashNameList[1] ?? ""}`,
+      title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
     });
   }
 }
@@ -198,7 +198,7 @@ async function fetchTicketsByCategory() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[0] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[0] ?? ""}`,
       });
       return;
     }
@@ -244,7 +244,7 @@ async function fetchTicketsByCategory() {
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
-      title: `Erro ao carregar dados do gráfico ${dashNameList[0] ?? ""}`,
+      title: `Erro ao carregar dados do gráfico: ${dashNameList[0] ?? ""}`,
     });
   }
 }

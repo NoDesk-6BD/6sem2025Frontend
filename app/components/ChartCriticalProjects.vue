@@ -18,20 +18,28 @@ const chartOptions = ref<ChartOptions<"bar">>({
   indexAxis: "y",
   responsive: true,
   maintainAspectRatio: true,
-  aspectRatio: 2,
+  aspectRatio: 2.2,
   plugins: {
     legend: { display: false },
     title: { display: false },
   },
   scales: {
     x: {
-      grid: { display: false },
+      grid: { display: true },
     },
     y: {
       grid: { display: false },
       ticks: {
         padding: 5,
         crossAlign: "far",
+        callback: function (value: string | number) {
+          const label = this.getLabelForValue
+            ? typeof value === "number"
+              ? this.getLabelForValue(value)
+              : (value?.toString() ?? "")
+            : (value?.toString() ?? "");
+          return label.match(/.{1,18}(\s|$)/g) || [label];
+        },
       },
     },
   },
