@@ -8,10 +8,26 @@
     </div>
 
     <div class="dash-boards">
-      <dash-base component="Dashboard1" dash-name="Dashboard 1" />
-      <dash-base component="Dashboard2" dash-name="Dashboard 2" />
-      <dash-base component="Dashboard3" dash-name="Dashboard 3" />
-      <dash-base component="Dashboard4" dash-name="Dashboard 4" />
+      <dash-base
+        component="Dashboard1"
+        dash-name="Dashboard 1"
+        title-style="style1"
+      />
+      <dash-base
+        component="Dashboard2"
+        dash-name="Dashboard 2"
+        title-style="style2"
+      />
+      <dash-base
+        component="Dashboard3"
+        dash-name="Dashboard 3"
+        title-style="style3"
+      />
+      <dash-base
+        component="Dashboard4"
+        dash-name="Dashboard 4"
+        title-style="style4"
+      />
     </div>
   </UContainer>
 </template>

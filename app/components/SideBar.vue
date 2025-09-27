@@ -1,52 +1,59 @@
 <template>
   <div
-    class="h-screen fixed top-0 left-0 transition-all duration-300 flex flex-col justify-between"
-    :class="collapsed ? 'w-20' : 'w-64'"
-    style="background-color: #2f373f"
+    class="h-screen fixed top-0 left-0 w-64 flex flex-col justify-between"
+    style="background: linear-gradient(180deg, #192f4e 5%, #1c314f 100%)"
   >
-    <div v-if="!collapsed" class="p-4 flex justify-end">
-      <button
-        class="text-white text-2xl p-1 hover:bg-gray-700 rounded"
-        @click="collapsed = !collapsed"
+    <!-- Usuário no topo -->
+    <div class="p-5 flex items-center gap-3 border-b border-slate-700">
+      <span
+        class="flex items-center justify-center"
+        style="width: 40px; height: 40px"
       >
-        ☰
-      </button>
-    </div>
-    <div v-else class="p-4 flex justify-start">
-      <button
-        class="text-white text-2xl p-1 hover:bg-gray-700 rounded"
-        @click="collapsed = !collapsed"
-      >
-        ☰
-      </button>
+        <UserCircle2 :size="40" class="text-white" />
+      </span>
+      <div>
+        <div class="text-white font-semibold">Usuário</div>
+        <div class="text-slate-400 text-xs">user@email.com</div>
+      </div>
     </div>
 
-    <nav class="flex-1 mt-4">
+    <!-- Navegação -->
+    <nav class="flex-1 mt-5">
       <ul>
         <li>
           <a
             href="#"
-            class="flex items-center gap-3 p-4 hover:bg-gray-700 text-white rounded"
+            class="flex items-center gap-3 p-4 hover:bg-neutral-700 text-white rounded transition"
           >
-            <span class="icon-dashboard text-xl">📊</span>
-            <span v-if="!collapsed" class="font-medium">Dashboard</span>
+            <span>
+              <LayoutDashboard :size="28" class="text-white" />
+            </span>
+            <span class="font-medium">Dashboards</span>
           </a>
         </li>
+        <!-- Adicione mais opções aqui -->
       </ul>
     </nav>
 
-    <div class="p-4">
+    <!-- Logout -->
+    <div class="p-6 border-t border-slate-700">
       <button
-        class="flex items-center gap-3 w-full p-2 hover:bg-gray-700 text-white rounded"
+        class="flex items-center gap-3 w-full p-2 hover:bg-red-700 text-white rounded transition"
+        @click="handleLogout"
       >
-        <span class="text-xl">🔒</span>
-        <span v-if="!collapsed" class="font-medium">Logout</span>
+        <span>
+          <LogOut :size="28" class="text-white" />
+        </span>
+        <span class="font-medium">Logout</span>
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-const collapsed = ref(false);
+import { UserCircle2, LayoutDashboard, LogOut } from "lucide-vue-next";
+
+function handleLogout() {
+  console.log("Logout - saindo...");
+}
 </script>

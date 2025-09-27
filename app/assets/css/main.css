@@ -26,12 +26,6 @@
 }
 
 .main-content {
-  display: grid;
-  grid-template-rows: 1fr 7fr;
   background-color: #ecf0f1;
   color: #2c3e50;
-  padding: 20px;
-  box-sizing: border-box;
-  width: auto;
-  height: auto;
 }

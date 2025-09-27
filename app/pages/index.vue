@@ -1,59 +1,64 @@
 <template>
-  <div class="main-content">
+  <div class="flex flex-col p-2 main-content">
     <div>
-      <div class="grid grid-cols-2 mb-7">
+      <div class="grid grid-cols-2">
         <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
         <TimeFilter />
       </div>
 
-      <div class="grid grid-cols-4 gap-5 mb-7">
+      <div class="grid grid-cols-4 gap-2 mb-2">
         <MetricsCard
-          titulo-metrica="Metrica 1"
-          :valor-metrica="15"
-          :bottom-limit="3"
+          titulo-metrica="Métrica 1"
+          :valor-metrica="3"
+          :bottom-limit="4"
           :top-limit="10"
           :relation="true"
         />
         <MetricsCard
-          titulo-metrica="Metrica 2"
-          :valor-metrica="31"
+          titulo-metrica="Métrica 2"
+          :valor-metrica="6"
           :bottom-limit="3"
           :top-limit="10"
           :relation="false"
         />
         <MetricsCard
-          titulo-metrica="Metrica 3"
-          :valor-metrica="77"
+          titulo-metrica="Métrica 3"
+          :valor-metrica="9"
           :bottom-limit="3"
           :top-limit="10"
           :relation="true"
         />
         <MetricsCard
-          titulo-metrica="Metrica 4"
-          :valor-metrica="42"
-          :bottom-limit="40"
-          :top-limit="50"
+          titulo-metrica="Métrica 4"
+          :valor-metrica="12"
+          :bottom-limit="5"
+          :top-limit="10"
           :relation="true"
         />
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-5 max-h-[600px]">
-      <dash-base dash-name="Dashboard 1" :title-style="chartTitleClass" />
-      <dash-base dash-name="Dashboard 2" :title-style="chartTitleClass" />
+    <div id="charts" class="grid grid-cols-2 gap-2">
+      <dash-base
+        class="col-span-2 col-start-1"
+        :dash-name="dashNameList[0] ?? ''"
+        :title-style="chartTitleClass"
+      >
+        <ChartTicketsByCategory :chart-data="TicketsByCategoryData" />
+      </dash-base>
+
+      <dash-base
+        :dash-name="dashNameList[1] ?? ''"
+        :title-style="chartTitleClass"
+      >
+        <ChartCriticalProjects :chart-data="CriticalProjectsData" />
+      </dash-base>
 
       <dash-base
         :dash-name="dashNameList[2] ?? ''"
         :title-style="chartTitleClass"
       >
-        <ChartCriticalProjects :chart-data="criticalProjectsData" />
-      </dash-base>
-
-      <dash-base
-        :dash-name="dashNameList[3] ?? ''"
-        :title-style="chartTitleClass"
-      >
-        <DoughnutChart :chart-data="CriticalTicketsData" />
+        <ChartCriticalCategories :chart-data="CriticalCategoriesData" />
       </dash-base>
     </div>
   </div>
@@ -63,14 +68,16 @@
 import { ref, onMounted } from "vue";
 import type { ChartData } from "chart.js";
 import { useToast, useRuntimeConfig } from "#imports";
+import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
+import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
+import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 const dashNameList = [
-  "Dashboard 1",
-  "Dashboard 2",
+  "Chamados por Categoria",
   "Projetos Críticos",
-  "Chamados Críticos",
+  "Categorias Críticas",
 ];
 
 const toast = useToast();
@@ -78,21 +85,41 @@ const toast = useToast();
 interface Category {
   id: string;
   name: string;
-  count: number;
+  count: number[];
+  abscissa: string[];
 }
 
-const CriticalTicketsData = ref<ChartData<"doughnut", number[], string>>({
+const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
   datasets: [],
 });
 
-const criticalProjectsData = ref<ChartData<"bar", number[], string>>({
+const CriticalProjectsData = ref<ChartData<"bar", number[], string>>({
+  labels: [],
   datasets: [],
 });
 
-async function fetchCategories() {
-  const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
+const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
+  labels: [],
+  datasets: [],
+});
 
+const colorsDoughnut = ["#005691", "#2C89C9", "#1E78B6", "#0F67A4", "#3B9ADB"];
+
+const colors = [
+  "#1E78B6", // Azul
+  "#EF4444", // Vermelho
+  "#10B981", // Verde
+  "#F59E0B", // Amarelo
+  "#8B5CF6", // Roxo
+  "#EC4899", // Rosa
+  "#14B8A6", // Turquesa
+  "#F97316", // Laranja
+  "#6366F1", // Indigo
+  "#E11D48", // Vermelho Escuro
+];
+
+async function fetchCriticalCategories() {
   try {
     const config = useRuntimeConfig();
 
@@ -101,18 +128,18 @@ async function fetchCategories() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[2] ?? ""}`,
       });
       return;
     }
 
-    CriticalTicketsData.value = {
+    CriticalCategoriesData.value = {
       labels: res.map((c) => c.name),
       datasets: [
         {
-          label: "Chamados",
-          data: res.map((c) => c.count),
-          backgroundColor: colors.slice(0, res.length), // pega só o necessário
+          label: "Categorias Críticas",
+          data: res.flatMap((c) => c.count),
+          backgroundColor: colorsDoughnut.slice(0, res.length), // pega só o necessário
           borderWidth: 1,
         },
       ],
@@ -120,7 +147,7 @@ async function fetchCategories() {
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
-      title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+      title: `Erro ao carregar dados do gráfico: ${dashNameList[2] ?? ""}`,
     });
   }
 }
@@ -136,26 +163,86 @@ async function fetchCriticalProjects() {
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
       toast.add({
-        title: `Erro ao carregar dados do gráfico ${dashNameList[3] ?? ""}`,
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
       });
       return;
     }
 
-    criticalProjectsData.value = {
-      labels: res.map((c) => c.name).map((label) => formatLabel(label, 18)),
+    CriticalProjectsData.value = {
+      labels: res.map((c) => formatLabel(c.name, 18).join(" ")),
       datasets: [
         {
           label: "Projetos Críticos",
-          data: res.map((c) => c.count),
+          data: res.flatMap((c) => c.count ?? 0),
           borderWidth: 1,
-          backgroundColor: "#3480d8",
+          backgroundColor: colors[0],
         },
       ],
     };
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
-      title: `Erro ao carregar dados do gráfico ${dashNameList[2] ?? ""}`,
+      title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
+    });
+  }
+}
+
+async function fetchTicketsByCategory() {
+  try {
+    const config = useRuntimeConfig();
+
+    const res = await $fetch<Category[]>(
+      `${config.public.apiBase}/tickets_by_category`,
+    );
+
+    if (!res || !Array.isArray(res)) {
+      console.error("Resposta inválida do backend:", res);
+      toast.add({
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[0] ?? ""}`,
+      });
+      return;
+    }
+
+    const LabelList: string[] = res.map((c) => c.name);
+    const ValueList = res.map((c) => c.count);
+    const abscissa = res.map((c) => c.abscissa);
+
+    TicketsByCategoryData.value = {
+      labels: abscissa[2] ?? [],
+      datasets: [
+        {
+          label: LabelList[0]?.[0] ?? "",
+          data:
+            ValueList[1] && Array.isArray(ValueList[1][0])
+              ? ValueList[1][0]
+              : [],
+          borderColor: colors[0],
+          backgroundColor: colors[0],
+        },
+        {
+          label: LabelList[0]?.[1] ?? "",
+          data:
+            ValueList[1] && Array.isArray(ValueList[1][1])
+              ? ValueList[1][1]
+              : [],
+          borderColor: colors[1],
+          backgroundColor: colors[1],
+        },
+        {
+          label: LabelList[0]?.[2] ?? "",
+          data:
+            ValueList[1] && Array.isArray(ValueList[1][2])
+              ? ValueList[1][2]
+              : [],
+          borderColor: colors[3],
+          backgroundColor: colors[3],
+        },
+      ],
+    };
+  } catch (error) {
+    console.error("Erro ao buscar categorias:", error);
+    toast.add({
+      title: `Erro ao carregar dados do gráfico: ${dashNameList[0] ?? ""}`,
     });
   }
 }
@@ -187,7 +274,8 @@ const formatLabel = (str: string, maxLength: number): string[] => {
 };
 
 onMounted(() => {
-  fetchCategories();
+  fetchTicketsByCategory();
   fetchCriticalProjects();
+  fetchCriticalCategories();
 });
 </script>
