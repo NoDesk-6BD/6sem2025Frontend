@@ -46,3 +46,16 @@ const corValor = computed(() => {
     </div>
   </UCard>
 </template>
+
+<style scoped>
+/* Reduz o padding dos divs internos do UCard */
+:deep(.p-4) {
+  padding: 0.6rem !important;
+}
+:deep(.sm\:px-6) {
+  padding-left: 0.8rem !important;
+}
+:deep(.sm\:p-6) {
+  padding-left: 0.8rem !important;
+}
+</style>

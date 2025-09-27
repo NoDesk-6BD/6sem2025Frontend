@@ -18,7 +18,7 @@
     </div>
 
     <!-- Navegação -->
-    <nav class="flex-1 mt-3">
+    <nav class="flex-1 mt-5">
       <ul>
         <li>
           <a
@@ -39,6 +39,7 @@
     <div class="p-6 border-t border-slate-700">
       <button
         class="flex items-center gap-3 w-full p-2 hover:bg-red-700 text-white rounded transition"
+        @click="handleLogout"
       >
         <span>
           <LogOut :size="28" class="text-white" />
@@ -51,4 +52,8 @@
 
 <script setup lang="ts">
 import { UserCircle2, LayoutDashboard, LogOut } from "lucide-vue-next";
+
+function handleLogout() {
+  console.log("Logout - saindo...");
+}
 </script>

@@ -1,9 +1,9 @@
 <template>
   <div class="flex items-center justify-end">
     <label class="mr-2">Período selecionado:</label>
-    <UPopover popper="{ placement: 'bottom-end' }">
+    <UPopover popper="{ placement: 'bottom-end' }" @show="focusHiddenButton">
       <UButton
-        class="bg-[#1E78B6] hover:bg-[#2C89C9] text-white"
+        class="bg-[#2082c5] hover:bg-[#1a6ba2] text-white"
         variant="solid"
         icon="i-lucide-calendar"
       >
@@ -13,6 +13,9 @@
         <template v-else> Selecione o período </template>
       </UButton>
       <template #content>
+        <button ref="hiddenBtn" class="sr-only" tabindex="0">
+          Foco oculto
+        </button>
         <div class="flex flex-row gap-2 px-2 py-3 min-w-[400px] items-center">
           <!-- Botões rápidos centralizados na esquerda -->
           <div
@@ -25,9 +28,9 @@
               variant="ghost"
               :class="[
                 'min-w-[140px] justify-center rounded-all text-base font-normal border transition-colors',
-                value === option.id
-                  ? 'bg-[#f2f8fd] text-[#1E78B6] border-[#1E78B6] font-semibold'
-                  : 'bg-white text-[#1E78B6] border-transparent hover:bg-[#F1F5F9]',
+                value !== option.id
+                  ? 'bg-white text-[#2082c6] border-transparent hover:bg-[#dcedf9] border-[#2082c6]'
+                  : 'bg-[#2082c5] text-white border-[#2082c5] font-semibold hover:bg-[#2082c5]',
               ]"
               @click="selectQuick(option)"
             >
@@ -38,14 +41,14 @@
           <div>
             <UCalendar
               v-model="customRange"
-              :number-of-months="2"
+              :number-of-months="1"
               range
               class="custom-calendar"
               locale="pt-BR"
               @update:model-value="onCustomRange"
             />
             <UButton
-              class="mt-2 w-full bg-[#1E78B6] hover:bg-[#0F67A4] text-white"
+              class="mt-2 w-full bg-[#2082c5] hover:bg-[#1a6ba2] text-white"
               block
               @click="apply"
             >
@@ -70,13 +73,14 @@ const quickOptions = [
   { label: "Últimos 7 dias", id: "7", duration: { days: 7 } },
   { label: "Últimos 14 dias", id: "14", duration: { days: 14 } },
   { label: "Últimos 30 dias", id: "30", duration: { days: 30 } },
-  { label: "Últimos 3 meses", id: "3m", duration: { months: 3 } },
-  { label: "Últimos 6 meses", id: "6m", duration: { months: 6 } },
-  { label: "Último ano", id: "1y", duration: { years: 1 } },
+  { label: "Últimos 3 meses", id: "90", duration: { months: 3 } },
+  { label: "Últimos 6 meses", id: "180", duration: { months: 6 } },
+  { label: "Último ano", id: "365", duration: { years: 1 } },
 ];
 
-const value = ref("7"); // default: últimos 7 dias
+const value = ref("");
 const customRange = ref<{ start?: CalendarDate; end?: CalendarDate }>({});
+const hiddenBtn = ref<HTMLButtonElement | null>(null);
 
 const df = new DateFormatter("pt-BR", { dateStyle: "medium" });
 
@@ -94,11 +98,11 @@ const selectedLabel = computed(() => {
 });
 
 function selectQuick(option: {
+  label: string;
   id: string;
   duration: { days?: number; months?: number; years?: number };
 }) {
   value.value = option.id;
-  // Calcula o range baseado na duração
   const now = new Date();
   const today = new CalendarDate(
     now.getFullYear(),
@@ -121,47 +125,77 @@ function selectQuick(option: {
 function onCustomRange(
   range: { start?: CalendarDate; end?: CalendarDate } | null,
 ) {
-  value.value = "custom";
   if (range && range.start && range.end) {
-    // If start/end are not CalendarDate, convert if needed
-    customRange.value = {
-      start: new CalendarDate(
-        range.start.year,
-        range.start.month,
-        range.start.day,
-      ),
-      end: new CalendarDate(range.end.year, range.end.month, range.end.day),
-    };
-  } else {
-    customRange.value = {};
+    customRange.value = range;
+    if (value.value !== "custom") {
+      value.value = "custom";
+    }
   }
 }
 
-// Placeholder for apply button click
+function formatDateBR(date: CalendarDate) {
+  const d = date.toDate(getLocalTimeZone());
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 function apply() {
-  // Emitir um evento
+  // Printar no console a data selecionada no formato DD-MM-YYYY
+  if (customRange.value.start && customRange.value.end) {
+    console.log(
+      "Data selecionada:",
+      formatDateBR(customRange.value.start as CalendarDate),
+      "-",
+      formatDateBR(customRange.value.end as CalendarDate),
+    );
+  } else {
+    console.log("Nenhum período selecionado");
+  }
+}
+
+function focusHiddenButton() {
+  if (hiddenBtn.value) hiddenBtn.value.focus();
 }
 </script>
 
 <style scoped>
-.custom-calendar :deep(.vc-day-content) {
-  background-color: transparent !important;
-  color: #222 !important;
+/* Nomes dos dias da semana */
+:deep(.text-primary.text-xs) {
+  color: #1e78b6 !important;
 }
-.custom-calendar :deep(.vc-day-content.vc-highlight) {
+
+/* Dia atual */
+:deep(.vc-day-today),
+:deep([data-today]) {
+  color: #3eaaf2 !important;
+}
+
+/* Hover dos dias do mês não selecionados */
+:deep([role="button"]:not([data-selected]):hover) {
+  background-color: #d1e0eb !important;
+}
+
+/* Background e hover dos dias selecionados */
+:deep([data-selected]) {
   background-color: #1e78b6 !important;
   color: #fff !important;
 }
-.custom-calendar :deep(.vc-day-content.vc-selected) {
-  background-color: #005691 !important;
-  color: #fff !important;
+:deep([data-selected]:hover) {
+  background-color: #156090 !important;
 }
-.custom-calendar :deep(.vc-day-content:hover) {
-  background-color: #3b9adb !important;
-  color: #fff !important;
+
+/* Dias do range selecionado */
+:deep([data-highlighted]:not([data-selected])) {
+  background-color: #dcedf9 !important;
+  color: #134e77 !important;
 }
-.custom-calendar :deep(.vc-day-content.vc-disabled) {
-  color: #cbd5e1 !important;
-  background: transparent !important;
+
+/* Força a cor dos botões em todos os estados */
+:deep(button:focus) {
+  background-color: #1e78b6 !important;
+  border-color: #1e78b6 !important;
+  color: #fff !important;
 }
 </style>

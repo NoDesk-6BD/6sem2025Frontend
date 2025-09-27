@@ -1,12 +1,12 @@
 <template>
-  <div class="flex flex-col p-4 main-content">
+  <div class="flex flex-col p-2 main-content">
     <div>
-      <div class="grid grid-cols-2 mb-4">
+      <div class="grid grid-cols-2">
         <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
         <TimeFilter />
       </div>
 
-      <div class="grid grid-cols-4 gap-4 mb-4">
+      <div class="grid grid-cols-4 gap-2 mb-2">
         <MetricsCard
           titulo-metrica="Métrica 1"
           :valor-metrica="3"
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <div id="charts" class="grid grid-cols-2 gap-4">
+    <div id="charts" class="grid grid-cols-2 gap-2">
       <dash-base
         class="col-span-2 col-start-1"
         :dash-name="dashNameList[0] ?? ''"
@@ -206,8 +206,6 @@ async function fetchTicketsByCategory() {
     const LabelList: string[] = res.map((c) => c.name);
     const ValueList = res.map((c) => c.count);
     const abscissa = res.map((c) => c.abscissa);
-
-    console.log("abcissa", abscissa);
 
     TicketsByCategoryData.value = {
       labels: abscissa[2] ?? [],
