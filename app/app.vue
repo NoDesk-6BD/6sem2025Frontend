@@ -1,7 +1,14 @@
 <template>
-  <div>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-  </div>
+  <UApp>
+    <UHeader />
+
+    <UMain>
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+    </UMain>
+
+    <UFooter />
+    <UNotifications />
+  </UApp>
 </template>
