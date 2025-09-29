@@ -139,7 +139,7 @@ async function fetchCriticalCategories(params?: {
         : "";
 
     const res = await $fetch<Category[]>(
-      `${config.public.apiBase}/categories${query}`,
+      `${config.public.apiBase}/dashboard/categories${query}`,
     );
 
     if (!res || !Array.isArray(res)) {
@@ -182,7 +182,7 @@ async function fetchCriticalProjects(params?: {
         : "";
 
     const res = await $fetch<Category[]>(
-      `${config.public.apiBase}/critical_projects${query}`,
+      `${config.public.apiBase}/dashboard/critical_projects${query}`,
     );
 
     if (!res || !Array.isArray(res)) {
@@ -225,7 +225,7 @@ async function fetchTicketsByCategory(params?: {
         : "";
 
     const result = await $fetch<TicketsByCategory>(
-      `${config.public.apiBase}/tickets_evolution${query}`,
+      `${config.public.apiBase}/dashboard/tickets_evolution${query}`,
     );
 
     const res = result.itens;
