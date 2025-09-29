@@ -89,6 +89,10 @@ interface Category {
   abscissa: string[];
 }
 
+interface TicketsByCategory {
+  itens: Category[];
+}
+
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
   datasets: [],
@@ -191,9 +195,11 @@ async function fetchTicketsByCategory() {
   try {
     const config = useRuntimeConfig();
 
-    const res = await $fetch<Category[]>(
-      `${config.public.apiBase}/tickets_by_category`,
+    const result = await $fetch<TicketsByCategory>(
+      `http://127.0.0.1:8000/dashboard/tickets_evolution`,
     );
+
+    const res = result.itens;
 
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
