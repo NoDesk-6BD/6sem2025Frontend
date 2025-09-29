@@ -133,30 +133,32 @@ function onCustomRange(
   }
 }
 
-function formatDateBR(date: CalendarDate) {
-  const d = date.toDate(getLocalTimeZone());
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}-${month}-${year}`;
+function focusHiddenButton() {
+  if (hiddenBtn.value) hiddenBtn.value.focus();
 }
 
+const emit = defineEmits<{
+  (e: "updateRange", payload: { start_date: string; end_date: string }): void;
+}>();
+
 function apply() {
-  // Printar no console a data selecionada no formato DD-MM-YYYY
   if (customRange.value.start && customRange.value.end) {
-    console.log(
-      "Data selecionada:",
-      formatDateBR(customRange.value.start as CalendarDate),
-      "-",
-      formatDateBR(customRange.value.end as CalendarDate),
-    );
+    const start = formatAPIDate(customRange.value.start as CalendarDate);
+    const end = formatAPIDate(customRange.value.end as CalendarDate);
+    console.log("Enviando:", start, "-", end);
+
+    emit("updateRange", { start_date: start, end_date: end });
   } else {
     console.log("Nenhum período selecionado");
   }
 }
 
-function focusHiddenButton() {
-  if (hiddenBtn.value) hiddenBtn.value.focus();
+function formatAPIDate(date: CalendarDate) {
+  const d = date.toDate(getLocalTimeZone());
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 </script>
 

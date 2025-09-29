@@ -3,7 +3,7 @@
     <div>
       <div class="grid grid-cols-2">
         <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
-        <TimeFilter />
+        <TimeFilter @update-range="onRangeUpdate" />
       </div>
 
       <div class="grid grid-cols-4 gap-2 mb-2">
@@ -93,6 +93,8 @@ interface TicketsByCategory {
   itens: Category[];
 }
 
+type TicketsDataset = ChartDataset<"line", number[]>;
+
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
   datasets: [],
@@ -123,11 +125,22 @@ const colors = [
   "#E11D48", // Vermelho Escuro
 ];
 
-async function fetchCriticalCategories() {
+async function fetchCriticalCategories(params?: {
+  start_date?: string;
+  end_date?: string;
+}) {
   try {
     const config = useRuntimeConfig();
 
-    const res = await $fetch<Category[]>(`${config.public.apiBase}/categories`);
+    // monta query string somente se tiver params válidos
+    const query =
+      params?.start_date && params?.end_date
+        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
+        : "";
+
+    const res = await $fetch<Category[]>(
+      `${config.public.apiBase}/categories${query}`,
+    );
 
     if (!res || !Array.isArray(res)) {
       console.error("Resposta inválida do backend:", res);
@@ -143,7 +156,7 @@ async function fetchCriticalCategories() {
         {
           label: "Categorias Críticas",
           data: res.flatMap((c) => c.count),
-          backgroundColor: colorsDoughnut.slice(0, res.length), // pega só o necessário
+          backgroundColor: colorsDoughnut.slice(0, res.length),
           borderWidth: 1,
         },
       ],
@@ -156,12 +169,20 @@ async function fetchCriticalCategories() {
   }
 }
 
-async function fetchCriticalProjects() {
+async function fetchCriticalProjects(params?: {
+  start_date?: string;
+  end_date?: string;
+}) {
   try {
     const config = useRuntimeConfig();
 
+    const query =
+      params?.start_date && params?.end_date
+        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
+        : "";
+
     const res = await $fetch<Category[]>(
-      `${config.public.apiBase}/critical_projects`,
+      `${config.public.apiBase}/critical_projects${query}`,
     );
 
     if (!res || !Array.isArray(res)) {
@@ -184,19 +205,27 @@ async function fetchCriticalProjects() {
       ],
     };
   } catch (error) {
-    console.error("Erro ao buscar categorias:", error);
+    console.error(error);
     toast.add({
       title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
     });
   }
 }
 
-async function fetchTicketsByCategory() {
+async function fetchTicketsByCategory(params?: {
+  start_date?: string;
+  end_date?: string;
+}) {
   try {
     const config = useRuntimeConfig();
 
+    const query =
+      params?.start_date && params?.end_date
+        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
+        : "";
+
     const result = await $fetch<TicketsByCategory>(
-      `http://127.0.0.1:8000/dashboard/tickets_evolution`,
+      `${config.public.apiBase}/tickets_evolution${query}`,
     );
 
     const res = result.itens;
@@ -209,49 +238,35 @@ async function fetchTicketsByCategory() {
       return;
     }
 
-    const LabelList: string[] = res.map((c) => c.name);
-    const ValueList = res.map((c) => c.count);
     const abscissa = res.map((c) => c.abscissa);
 
     TicketsByCategoryData.value = {
-      labels: abscissa[2] ?? [],
-      datasets: [
-        {
-          label: LabelList[0]?.[0] ?? "",
-          data:
-            ValueList[1] && Array.isArray(ValueList[1][0])
-              ? ValueList[1][0]
-              : [],
-          borderColor: colors[0],
-          backgroundColor: colors[0],
-        },
-        {
-          label: LabelList[0]?.[1] ?? "",
-          data:
-            ValueList[1] && Array.isArray(ValueList[1][1])
-              ? ValueList[1][1]
-              : [],
-          borderColor: colors[1],
-          backgroundColor: colors[1],
-        },
-        {
-          label: LabelList[0]?.[2] ?? "",
-          data:
-            ValueList[1] && Array.isArray(ValueList[1][2])
-              ? ValueList[1][2]
-              : [],
-          borderColor: colors[3],
-          backgroundColor: colors[3],
-        },
-      ],
+      labels: abscissa[0] ?? [], // usa a abscissa da primeira categoria
+      datasets: res.map<TicketsDataset>((c, index) => ({
+        label: c.name,
+        data: c.count,
+        borderColor: colors[index],
+        backgroundColor: colors[index],
+      })),
     };
   } catch (error) {
-    console.error("Erro ao buscar categorias:", error);
+    console.error("Erro ao buscar tickets:", error);
     toast.add({
       title: `Erro ao carregar dados do gráfico: ${dashNameList[0] ?? ""}`,
     });
   }
 }
+
+function onRangeUpdate(payload: { start_date: string; end_date: string }) {
+  fetchCriticalCategories(payload);
+  fetchCriticalProjects(payload);
+  fetchTicketsByCategory(payload);
+}
+
+// chamada inicial sem filtros → pega os 60 dias do backend
+fetchCriticalCategories();
+fetchCriticalProjects();
+fetchTicketsByCategory();
 
 const formatLabel = (str: string, maxLength: number): string[] => {
   const words = str.split(" ");
