@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col p-2 main-content">
     <div>
-      <div class="grid grid-cols-2">
+      <div class="grid grid-cols-2 align-items-center">
         <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
         <TimeFilter @update-range="onRangeUpdate" />
       </div>
