@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import type { ChartData } from "chart.js";
-import { useToast, useRuntimeConfig } from "#imports";
+import { useToast } from "#imports";
 import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
@@ -75,25 +75,12 @@ import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 const dashNameList = [
-  "Chamados por Categoria",
+  "Evolução de Chamados por Categoria",
   "Projetos Críticos",
-  "Categorias Críticas",
+  "Subcategorias Críticas",
 ];
 
 const toast = useToast();
-
-interface Category {
-  id: string;
-  name: string;
-  count: number[];
-  abscissa: string[];
-}
-
-interface TicketsByCategory {
-  itens: Category[];
-}
-
-type TicketsDataset = ChartDataset<"line", number[]>;
 
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
@@ -110,8 +97,6 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   datasets: [],
 });
 
-const colorsDoughnut = ["#005691", "#2C89C9", "#1E78B6", "#0F67A4", "#3B9ADB"];
-
 const colors = [
   "#1E78B6", // Azul
   "#EF4444", // Vermelho
@@ -125,38 +110,83 @@ const colors = [
   "#E11D48", // Vermelho Escuro
 ];
 
+// Função utilitária para pegar o último dia disponível
+function getLastDateKey(obj: Record<string, unknown>) {
+  const keys = Object.keys(obj);
+  return keys.sort().at(-1) ?? "";
+}
+
+// Função utilitária para pegar os dados de um período
+function getDataByPeriod(
+  obj: Record<string, unknown>,
+  start: string,
+  end: string,
+): unknown[] {
+  const keys = Object.keys(obj)
+    .filter((date) => date >= start && date <= end)
+    .sort();
+  return keys.map((date) => (obj as Record<string, unknown[]>)[date]).flat();
+}
+
+// Função utilitária para pegar os últimos N dias disponíveis
+function getLastNDates(obj: Record<string, unknown>, n: number) {
+  const keys = Object.keys(obj).sort();
+  return keys.slice(-n);
+}
+
+// Função para somar counts por nome
+function sumByName(arr: { name: string; count: number }[]) {
+  const map = new Map<string, number>();
+  arr.forEach((item) => {
+    map.set(item.name, (map.get(item.name) ?? 0) + item.count);
+  });
+  return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+}
+
+// Novo range: de azul escuro (#001a33) até azul claro (#3B9ADB)
+function getBlueShade(value: number, min: number, max: number) {
+  const ratio = (value - min) / Math.max(1, max - min);
+  // Azul escuro: r=0, g=26, b=51
+  // Azul claro:  r=59, g=154, b=219
+  const r = Math.round(0 + ratio * (59 - 0));
+  const g = Math.round(26 + ratio * (154 - 26));
+  const b = Math.round(51 + ratio * (219 - 51));
+  return `rgb(${r},${g},${b})`;
+}
+
 async function fetchCriticalCategories(params?: {
   start_date?: string;
   end_date?: string;
 }) {
   try {
-    const config = useRuntimeConfig();
-
-    // monta query string somente se tiver params válidos
-    const query =
-      params?.start_date && params?.end_date
-        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
-        : "";
-
-    const res = await $fetch<Category[]>(
-      `${config.public.apiBase}/dashboard/categories${query}`,
+    const res = await $fetch<Record<string, unknown>>(
+      `http://localhost:8080/critical_categories`,
     );
 
-    if (!res || !Array.isArray(res)) {
-      console.error("Resposta inválida do backend:", res);
-      toast.add({
-        title: `Erro ao carregar dados do gráfico: ${dashNameList[2] ?? ""}`,
-      });
-      return;
+    let data: { name: string; count: number }[] = [];
+    if (params?.start_date && params?.end_date) {
+      data = getDataByPeriod(res, params.start_date, params.end_date) as {
+        name: string;
+        count: number;
+      }[];
+      data = sumByName(data); // soma por nome
+    } else {
+      const lastDate = getLastDateKey(res);
+      data = (res[lastDate] as { name: string; count: number }[]) ?? [];
     }
 
+    // Calcula min/max para escala
+    const counts = data.map((c) => c.count);
+    const min = Math.min(...counts);
+    const max = Math.max(...counts);
+
     CriticalCategoriesData.value = {
-      labels: res.map((c) => c.name),
+      labels: data.map((c) => c.name),
       datasets: [
         {
           label: "Categorias Críticas",
-          data: res.flatMap((c) => c.count),
-          backgroundColor: colorsDoughnut.slice(0, res.length),
+          data: data.map((c) => c.count),
+          backgroundColor: data.map((c) => getBlueShade(c.count, min, max)),
           borderWidth: 1,
         },
       ],
@@ -174,31 +204,41 @@ async function fetchCriticalProjects(params?: {
   end_date?: string;
 }) {
   try {
-    const config = useRuntimeConfig();
-
-    const query =
-      params?.start_date && params?.end_date
-        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
-        : "";
-
-    const res = await $fetch<Category[]>(
-      `${config.public.apiBase}/dashboard/critical_projects${query}`,
+    const res = await $fetch<Record<string, unknown>>(
+      `http://localhost:8080/critical_projects`,
     );
 
-    if (!res || !Array.isArray(res)) {
-      console.error("Resposta inválida do backend:", res);
-      toast.add({
-        title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
+    let data: { id: string; name: string; count: number }[] = [];
+    if (params?.start_date && params?.end_date) {
+      const rawData = getDataByPeriod(
+        res,
+        params.start_date,
+        params.end_date,
+      ) as { id: string; name: string; count: number }[];
+      // soma por id e nome
+      const map = new Map<
+        string,
+        { id: string; name: string; count: number }
+      >();
+      rawData.forEach((item) => {
+        const key = item.id + item.name;
+        if (!map.has(key))
+          map.set(key, { id: item.id, name: item.name, count: 0 });
+        map.get(key)!.count += item.count;
       });
-      return;
+      data = Array.from(map.values());
+    } else {
+      const lastDate = getLastDateKey(res);
+      data =
+        (res[lastDate] as { id: string; name: string; count: number }[]) ?? [];
     }
 
     CriticalProjectsData.value = {
-      labels: res.map((c) => formatLabel(c.name, 18).join(" ")),
+      labels: data.map((c) => formatLabel(c.name, 18).join(" ")),
       datasets: [
         {
           label: "Projetos Críticos",
-          data: res.flatMap((c) => c.count ?? 0),
+          data: data.map((c) => c.count ?? 0),
           borderWidth: 1,
           backgroundColor: colors[0],
         },
@@ -217,37 +257,52 @@ async function fetchTicketsByCategory(params?: {
   end_date?: string;
 }) {
   try {
-    const config = useRuntimeConfig();
-
-    const query =
-      params?.start_date && params?.end_date
-        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
-        : "";
-
-    const result = await $fetch<TicketsByCategory>(
-      `${config.public.apiBase}/dashboard/tickets_evolution${query}`,
+    const res = await $fetch<Record<string, unknown>>(
+      `http://localhost:8080/tickets_evolution`,
     );
 
-    const res = result.itens;
-
-    if (!res || !Array.isArray(res)) {
-      console.error("Resposta inválida do backend:", res);
-      toast.add({
-        title: `Erro ao carregar dados do gráfico: ${dashNameList[0] ?? ""}`,
-      });
-      return;
+    let dateKeys: string[] = [];
+    if (params?.start_date && params?.end_date) {
+      dateKeys = Object.keys(res)
+        .filter(
+          (date) =>
+            params?.start_date !== undefined &&
+            params?.end_date !== undefined &&
+            date >= params.start_date &&
+            date <= params.end_date,
+        )
+        .sort();
+    } else {
+      // Últimos 7 dias por padrão
+      dateKeys = getLastNDates(res, 7);
     }
 
-    const abscissa = res.map((c) => c.abscissa);
+    // Agrupa os dados por name
+    const nameSet = new Set<string>();
+    dateKeys.forEach((date) => {
+      (res[date] as { name: string }[]).forEach((item) =>
+        nameSet.add(item.name),
+      );
+    });
+    const names = Array.from(nameSet);
+
+    // Para cada name, pega os counts dos dias
+    const datasets = names.map((name, idx) => ({
+      label: name,
+      data: dateKeys.map((date) => {
+        const found = (res[date] as { name: string; count: number }[]).find(
+          (item) => item.name === name,
+        );
+        return found ? found.count : 0;
+      }),
+      borderColor: colors[idx % colors.length],
+      backgroundColor: colors[idx % colors.length],
+      fill: false,
+    }));
 
     TicketsByCategoryData.value = {
-      labels: abscissa[0] ?? [], // usa a abscissa da primeira categoria
-      datasets: res.map<TicketsDataset>((c, index) => ({
-        label: c.name,
-        data: c.count,
-        borderColor: colors[index],
-        backgroundColor: colors[index],
-      })),
+      labels: dateKeys,
+      datasets,
     };
   } catch (error) {
     console.error("Erro ao buscar tickets:", error);
@@ -263,7 +318,7 @@ function onRangeUpdate(payload: { start_date: string; end_date: string }) {
   fetchTicketsByCategory(payload);
 }
 
-// chamada inicial sem filtros → pega os 60 dias do backend
+// Ao iniciar, mostra os últimos 7 dias
 fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
