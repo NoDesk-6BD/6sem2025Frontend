@@ -12,7 +12,7 @@
 }
 
 .container {
-/* REMOVER AS REGRAS DE GRID FIXO */
+  /* REMOVER AS REGRAS DE GRID FIXO */
   /* display: grid; */
   /* grid-template-columns: 1fr 6fr; */
   height: 100vh;

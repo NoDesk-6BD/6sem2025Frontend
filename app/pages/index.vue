@@ -64,13 +64,10 @@
   </div>
 </template>
 
-
-
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import type { ChartData } from "chart.js";
+import type { ChartData, ChartDataset } from "chart.js";
 import { useToast, useRuntimeConfig } from "#imports";
-import type { ChartDataset } from "chart.js";
 import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
@@ -200,12 +197,12 @@ async function fetchCriticalProjects(params?: {
         ? `?start_date=${params.start_date}&end_date=${params.end_date}`
         : "";
 
-// 1. Tipagem correta: espera o array de CriticalProjectsResponse
+    // 1. Tipagem correta: espera o array de CriticalProjectsResponse
     const res = await $fetch<CriticalProjectsResponse[]>(
       `${config.public.apiBase}/dashboard/critical_projects${query}`,
     );
 
-// 2. Extrai o array de linhas de projetos
+    // 2. Extrai o array de linhas de projetos
     const projectRows = res?.[0]?.rows;
 
     if (!projectRows || !Array.isArray(projectRows)) {
@@ -218,7 +215,7 @@ async function fetchCriticalProjects(params?: {
 
     CriticalProjectsData.value = {
       // CORREÇÃO: REMOVIDO o .join(" ") para enviar o array de strings
-      labels: projectRows.map((p) => formatLabel(p.product_name, 18)), 
+      labels: projectRows.map((p) => formatLabel(p.product_name, 18)),
       datasets: [
         {
           label: "Projetos Críticos",
@@ -318,7 +315,7 @@ const formatLabel = (str: string, maxLength: number): string[] => {
   return lines.map((line) => line.padEnd(longestLineLength, " "));
    CORREÇÃO: Remove a lógica de padEnd (preenchimento) para não interferir na renderização do eixo Y.
   Apenas retorna o array de linhas. */
-  return lines; 
+  return lines;
 };
 
 onMounted(() => {

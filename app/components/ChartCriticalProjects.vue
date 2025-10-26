@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { ref, defineProps } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
-import BarChart from "./BarChart.vue"; 
+import BarChart from "./BarChart.vue";
 
 const props = defineProps<{
   chartData: ChartData<"bar", number[], string>;
@@ -18,8 +18,8 @@ const props = defineProps<{
 const chartOptions = ref<ChartOptions<"bar">>({
   indexAxis: "y",
   responsive: true,
-  maintainAspectRatio: true, 
-  aspectRatio: 2.2, 
+  maintainAspectRatio: true,
+  aspectRatio: 2.2,
   plugins: {
     legend: { display: false },
     title: { display: false },
@@ -32,11 +32,11 @@ const chartOptions = ref<ChartOptions<"bar">>({
       grid: { display: false },
       ticks: {
         padding: 5,
-        // CORREÇÃO: Centraliza verticalmente e usa o callback simples para evitar o crash
-        crossAlign: "center", 
+        crossAlign: "center", // Alterado de 'far' para 'center' (melhor alinhamento)
+        // CORREÇÃO: Remove a lógica complexa de quebra de linha.
+        // O Chart.js renderiza arrays de strings como multi-linhas automaticamente.
         callback: function (value: string | number) {
-          // SIMPLIFICADO: Retorna o array de strings (multi-linhas) já preparado pelo index.vue
-          return this.getLabelForValue(value) ?? ""; 
+          return this.getLabelForValue(value) ?? "";
         },
       },
     },
