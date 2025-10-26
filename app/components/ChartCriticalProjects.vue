@@ -21,13 +21,21 @@ const chartOptions = ref<ChartOptions<"bar">>({
   maintainAspectRatio: true,
   aspectRatio: 2.2,
   plugins: {
-    legend: { display: false },
+    legend: {
+      display: true,
+      position: "bottom", // Exibe a legenda na parte inferior
+      labels: {
+        usePointStyle: true, // Estilo de ponto para melhor visual
+        padding: 10, // Espaçamento entre os itens
+        // O layout em colunas será adaptado pela largura do contêiner HTML
+      },
+    },
     title: { display: false },
     // NOVO: CONFIGURAÇÃO PARA DATALABELS
     datalabels: {
       color: "#fff", // Cor branca para contraste com a barra azul
-      align: "center",
-      anchor: "center",
+      align: "end",
+      anchor: "end",
       font: {
         weight: "bold", // Texto em negrito
       },
@@ -42,13 +50,11 @@ const chartOptions = ref<ChartOptions<"bar">>({
       grid: { display: true },
     },
     y: {
+      // CORREÇÃO: Desativa a exibição do eixo Y (onde os nomes estavam)
+      display: false,
       grid: { display: false },
       ticks: {
-        padding: 5,
-        crossAlign: "center", // Alterado de 'far' para 'center' (melhor alinhamento)
-        callback: function (value: string | number) {
-          return this.getLabelForValue(value) ?? "";
-        },
+        display: false,
       },
     },
   },

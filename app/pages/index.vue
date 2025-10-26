@@ -213,17 +213,23 @@ async function fetchCriticalProjects(params?: {
       return;
     }
 
+    // Estrutura para MÚLTIPLOS DATASETS (uma barra = um dataset)
     CriticalProjectsData.value = {
-      // CORREÇÃO: REMOVIDO o .join(" ") para enviar o array de strings
-      labels: projectRows.map((p) => formatLabel(p.product_name, 18)),
-      datasets: [
-        {
-          label: "Projetos Críticos",
-          data: projectRows.map((p) => p.open_tickets),
-          borderWidth: 1,
-          backgroundColor: colors[0],
-        },
-      ],
+      // O eixo Y precisa ter labels, mas eles serão desativados no componente de opções.
+      // Usamos um array de strings vazias para cada projeto.
+      labels: projectRows.map((p) => _formatLabel(p.product_name, 18)),
+      datasets: projectRows.map((p, index) => ({
+        // O nome do projeto vai no label do dataset para aparecer na legenda
+        label: p.product_name,
+        // Cada dataset tem apenas 1 ponto de dado
+        data: [p.open_tickets],
+        borderWidth: 1,
+        // Usa uma cor diferente para cada dataset/barra
+        backgroundColor: colors[index % colors.length],
+        // Garante que as barras sejam renderizadas lado a lado (em vez de empilhadas)
+        barPercentage: 0.9,
+        categoryPercentage: 0.8,
+      })),
     };
   } catch (error) {
     console.error("Erro ao buscar projetos críticos:", error);
@@ -289,7 +295,7 @@ fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
 
-const formatLabel = (str: string, maxLength: number): string[] => {
+const _formatLabel = (str: string, maxLength: number): string[] => {
   const words = str.split(" ");
   const lines: string[] = [];
   let currentLine = "";
