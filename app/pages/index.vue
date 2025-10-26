@@ -6,7 +6,7 @@
         <TimeFilter @update-range="onRangeUpdate" />
       </div>
 
-      <div class="grid grid-cols-4 gap-2 mb-2">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
           titulo-metrica="Métrica 1"
           :valor-metrica="3"
@@ -38,9 +38,9 @@
       </div>
     </div>
 
-    <div id="charts" class="grid grid-cols-2 gap-2">
+    <div id="charts" class="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-4">
       <dash-base
-        class="col-span-2 col-start-1"
+        class="col-span-1 lg:col-span-2 col-start-1"
         :dash-name="dashNameList[0] ?? ''"
         :title-style="chartTitleClass"
       >
@@ -64,13 +64,17 @@
   </div>
 </template>
 
+
+
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import type { ChartData } from "chart.js";
 import { useToast, useRuntimeConfig } from "#imports";
+import type { ChartDataset } from "chart.js";
 import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
+import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
@@ -91,6 +95,21 @@ interface Category {
 
 interface TicketsByCategory {
   itens: Category[];
+}
+
+// NOVAS INTERFACES para o JSON retornado pelo backend
+interface CriticalProjectRow {
+  product_id: number;
+  product_name: string;
+  open_tickets: number;
+}
+
+interface CriticalProjectsResponse {
+  id: string;
+  generated_at: string;
+  limit: number;
+  open_status_ids: number[];
+  rows: CriticalProjectRow[]; // Onde a lista de projetos reside
 }
 
 type TicketsDataset = ChartDataset<"line", number[]>;
@@ -181,12 +200,16 @@ async function fetchCriticalProjects(params?: {
         ? `?start_date=${params.start_date}&end_date=${params.end_date}`
         : "";
 
-    const res = await $fetch<Category[]>(
+// 1. Tipagem correta: espera o array de CriticalProjectsResponse
+    const res = await $fetch<CriticalProjectsResponse[]>(
       `${config.public.apiBase}/dashboard/critical_projects${query}`,
     );
 
-    if (!res || !Array.isArray(res)) {
-      console.error("Resposta inválida do backend:", res);
+// 2. Extrai o array de linhas de projetos
+    const projectRows = res?.[0]?.rows;
+
+    if (!projectRows || !Array.isArray(projectRows)) {
+      console.error("Resposta inválida ou sem 'rows' no backend:", res);
       toast.add({
         title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
       });
@@ -194,18 +217,19 @@ async function fetchCriticalProjects(params?: {
     }
 
     CriticalProjectsData.value = {
-      labels: res.map((c) => formatLabel(c.name, 18).join(" ")),
+      // CORREÇÃO: REMOVIDO o .join(" ") para enviar o array de strings
+      labels: projectRows.map((p) => formatLabel(p.product_name, 18)), 
       datasets: [
         {
           label: "Projetos Críticos",
-          data: res.flatMap((c) => c.count ?? 0),
+          data: projectRows.map((p) => p.open_tickets),
           borderWidth: 1,
           backgroundColor: colors[0],
         },
       ],
     };
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao buscar projetos críticos:", error);
     toast.add({
       title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
     });
@@ -290,8 +314,11 @@ const formatLabel = (str: string, maxLength: number): string[] => {
     return lines;
   }
 
-  const longestLineLength = Math.max(...lines.map((line) => line.length));
+  /*onst longestLineLength = Math.max(...lines.map((line) => line.length));
   return lines.map((line) => line.padEnd(longestLineLength, " "));
+   CORREÇÃO: Remove a lógica de padEnd (preenchimento) para não interferir na renderização do eixo Y.
+  Apenas retorna o array de linhas. */
+  return lines; 
 };
 
 onMounted(() => {
