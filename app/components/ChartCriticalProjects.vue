@@ -23,6 +23,19 @@ const chartOptions = ref<ChartOptions<"bar">>({
   plugins: {
     legend: { display: false },
     title: { display: false },
+    // NOVO: CONFIGURAÇÃO PARA DATALABELS
+    datalabels: {
+      color: "#fff", // Cor branca para contraste com a barra azul
+      align: "center",
+      anchor: "center",
+      font: {
+        weight: "bold", // Texto em negrito
+      },
+      formatter: (value: number) => {
+        // Formata o número com separador de milhar (Ex: 13.867)
+        return value.toLocaleString("pt-BR");
+      },
+    },
   },
   scales: {
     x: {
@@ -33,8 +46,6 @@ const chartOptions = ref<ChartOptions<"bar">>({
       ticks: {
         padding: 5,
         crossAlign: "center", // Alterado de 'far' para 'center' (melhor alinhamento)
-        // CORREÇÃO: Remove a lógica complexa de quebra de linha.
-        // O Chart.js renderiza arrays de strings como multi-linhas automaticamente.
         callback: function (value: string | number) {
           return this.getLabelForValue(value) ?? "";
         },
