@@ -9,12 +9,11 @@
 <script setup lang="ts">
 import { ref, defineProps } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
-import BarChart from "./BarChart.vue";
+import BarChart from "./BarChart.vue"; // Garanta que a importação existe
 
-const props = defineProps<{
-  chartData: ChartData<"bar", number[], string>;
-}>();
+const props = defineProps<{ chartData: ChartData<"bar", number[], string> }>();
 
+// CÓDIGO RESTAURADO: As opções originais do seu gráfico que funcionavam visualmente.
 const chartOptions = ref<ChartOptions<"bar">>({
   indexAxis: "y",
   responsive: true,
@@ -23,24 +22,22 @@ const chartOptions = ref<ChartOptions<"bar">>({
   plugins: {
     legend: {
       display: true,
-      position: "bottom", // Exibe a legenda na parte inferior
+      position: "bottom",
       labels: {
-        usePointStyle: true, // Estilo de ponto para melhor visual
-        padding: 10, // Espaçamento entre os itens
-        // O layout em colunas será adaptado pela largura do contêiner HTML
+        usePointStyle: true,
+        padding: 15,
+        boxWidth: 20,
       },
     },
     title: { display: false },
-    // NOVO: CONFIGURAÇÃO PARA DATALABELS
     datalabels: {
-      color: "#fff", // Cor branca para contraste com a barra azul
+      color: "#fff",
       align: "end",
       anchor: "end",
       font: {
-        weight: "bold", // Texto em negrito
+        weight: "bold",
       },
       formatter: (value: number) => {
-        // Formata o número com separador de milhar (Ex: 13.867)
         return value.toLocaleString("pt-BR");
       },
     },
@@ -50,11 +47,19 @@ const chartOptions = ref<ChartOptions<"bar">>({
       grid: { display: true },
     },
     y: {
-      // CORREÇÃO: Desativa a exibição do eixo Y (onde os nomes estavam)
-      display: false,
       grid: { display: false },
       ticks: {
-        display: false,
+        padding: 5,
+        crossAlign: "far",
+        callback: function (value: string | number) {
+          const label = this.getLabelForValue
+            ? typeof value === "number"
+              ? this.getLabelForValue(value)
+              : (value?.toString() ?? "")
+            : (value?.toString() ?? "");
+          // A expressão regular original para quebra de linha.
+          return label.match(/.{1,18}(\s|$)/g) || [label];
+        },
       },
     },
   },

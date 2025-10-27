@@ -197,39 +197,36 @@ async function fetchCriticalProjects(params?: {
         ? `?start_date=${params.start_date}&end_date=${params.end_date}`
         : "";
 
-    // 1. Tipagem correta: espera o array de CriticalProjectsResponse
-    const res = await $fetch<CriticalProjectsResponse[]>(
+    // CORREÇÃO 1: Tipagem correta para a resposta da API (um array com um objeto dentro)
+    const result = await $fetch<CriticalProjectsResponse[]>(
       `${config.public.apiBase}/dashboard/critical_projects${query}`,
     );
-
-    // 2. Extrai o array de linhas de projetos
-    const projectRows = res?.[0]?.rows;
+    // CORREÇÃO 2: Extrai o array de linhas de projetos de dentro da resposta
+    const projectRows = result?.[0]?.rows;
 
     if (!projectRows || !Array.isArray(projectRows)) {
-      console.error("Resposta inválida ou sem 'rows' no backend:", res);
+      console.error("Resposta inválida ou sem 'rows' no backend:", result);
       toast.add({
         title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
       });
       return;
     }
 
-    // Estrutura para MÚLTIPLOS DATASETS (uma barra = um dataset)
+    // LÓGICA RESTAURADA: Gera um único dataset, como no seu código original
     CriticalProjectsData.value = {
-      // O eixo Y precisa ter labels, mas eles serão desativados no componente de opções.
-      // Usamos um array de strings vazias para cada projeto.
-      labels: projectRows.map((p) => _formatLabel(p.product_name, 18)),
-      datasets: projectRows.map((p, index) => ({
-        // O nome do projeto vai no label do dataset para aparecer na legenda
-        label: p.product_name,
-        // Cada dataset tem apenas 1 ponto de dado
-        data: [p.open_tickets],
-        borderWidth: 1,
-        // Usa uma cor diferente para cada dataset/barra
-        backgroundColor: colors[index % colors.length],
-        // Garante que as barras sejam renderizadas lado a lado (em vez de empilhadas)
-        barPercentage: 0.9,
-        categoryPercentage: 0.8,
-      })),
+      // CORREÇÃO 3: Mapeia o nome do projeto (product_name) e junta com a formatação original
+      labels: projectRows.map((p) =>
+        _formatLabel(p.product_name, 18).join(" "),
+      ),
+      datasets: [
+        {
+          label: "Projetos Críticos",
+          // CORREÇÃO 4: Mapeia a contagem de tickets (open_tickets)
+          data: projectRows.map((p) => p.open_tickets),
+          borderWidth: 1,
+          backgroundColor: colors[0],
+        },
+      ],
     };
   } catch (error) {
     console.error("Erro ao buscar projetos críticos:", error);
@@ -296,6 +293,7 @@ fetchCriticalProjects();
 fetchTicketsByCategory();
 
 const _formatLabel = (str: string, maxLength: number): string[] => {
+  // Renomeado para _formatLabel
   const words = str.split(" ");
   const lines: string[] = [];
   let currentLine = "";
@@ -316,11 +314,9 @@ const _formatLabel = (str: string, maxLength: number): string[] => {
   if (lines.length <= 1) {
     return lines;
   }
-
-  /*onst longestLineLength = Math.max(...lines.map((line) => line.length));
-  return lines.map((line) => line.padEnd(longestLineLength, " "));
-   CORREÇÃO: Remove a lógica de padEnd (preenchimento) para não interferir na renderização do eixo Y.
-  Apenas retorna o array de linhas. */
+  // CORREÇÃO: Remove a lógica de padEnd (originalmente comentada)
+  //const longestLineLength = Math.max(...lines.map((line) => line.length));
+  //return lines.map((line) => line.padEnd(longestLineLength, " "));
   return lines;
 };
 
