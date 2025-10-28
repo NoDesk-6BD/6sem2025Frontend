@@ -7,10 +7,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps } from "vue";
+import { ref } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
 // CORREÇÃO: Importa o componente base de gráfico de barras
-import BarChart from "~/components/BarChart.vue";
+import BarChart from "./BarChart.vue";
 
 const props = defineProps<{
   chartData: ChartData<"bar", number[], string>;

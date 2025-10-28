@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps } from "vue";
+import { ref } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
 import BarChart from "./BarChart.vue"; // Garanta que a importação existe
 

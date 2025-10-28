@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import ChartCriticalCategories from "~/components/ChartCriticalCategories.vue";
+import ChartCriticalCategories from "../app/components/ChartCriticalCategories.vue";
 
 it("renders correctly when data is provided", () => {
   // 1. Crie um objeto de dados mock com a estrutura esperada
@@ -17,7 +17,7 @@ it("renders correctly when data is provided", () => {
   // 2. Passe os dados como prop ao montar o componente
   const wrapper = mount(ChartCriticalCategories, {
     props: {
-      data: mockChartData,
+      chartdata: mockChartData,
     },
   });
 
