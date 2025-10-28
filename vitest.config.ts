@@ -7,12 +7,20 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
+    // Adicione esta seção para simular componentes globais do NuxtUI
+    vue: {
+      stubs: {
+        UCard: true,
+        ClientOnly: true,
+        // Adicione aqui qualquer outro componente global que cause avisos
+      },
+    },
   },
   resolve: {
     alias: {
-      "~": path.resolve(__dirname, "."), // Adiciona o alias para a raiz
-      "@": path.resolve(__dirname, "."), // Adiciona o alias para a raiz
-      "#imports": path.resolve(__dirname, "./.nuxt/imports.d.ts"), // Aponta para as definições de auto-import
+      "~": path.resolve(__dirname, "."),
+      "@": path.resolve(__dirname, "."),
+      "#imports": path.resolve(__dirname, "./.nuxt/imports.d.ts"),
     },
   },
 });
