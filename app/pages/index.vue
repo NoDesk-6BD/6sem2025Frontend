@@ -262,10 +262,35 @@ async function fetchTicketsByCategory(params?: {
       return;
     }
 
-    const abscissa = res.map((c) => c.abscissa);
+    //    const abscissa = res.map((c) => c.abscissa);
+    // CORREÇÃO: Mapeamento para traduzir os meses
+    const monthMap: { [key: string]: string } = {
+      Jan: "Jan",
+      Feb: "Fev",
+      Mar: "Mar",
+      Apr: "Abr",
+      May: "Mai",
+      Jun: "Jun",
+      Jul: "Jul",
+      Aug: "Ago",
+      Sep: "Set",
+      Oct: "Out",
+      Nov: "Nov",
+      Dec: "Dez",
+    };
+
+    const abscissa = res.length > 0 ? res[0].abscissa : [];
+
+    // Traduz as datas do eixo X
+    const translatedAbscissa = abscissa.map((dateString) => {
+      const [month, year] = dateString.split("/");
+      const translatedMonth = monthMap[month] || month; // Usa a tradução ou mantém o original se não encontrar
+      return `${translatedMonth}/${year}`;
+    });
 
     TicketsByCategoryData.value = {
-      labels: abscissa[0] ?? [], // usa a abscissa da primeira categoria
+      //      labels: abscissa[0] ?? [], // usa a abscissa da primeira categoria
+      labels: translatedAbscissa, // Usa o array de datas traduzidas
       datasets: res.map<TicketsDataset>((c, index) => ({
         label: c.name,
         data: c.count,
