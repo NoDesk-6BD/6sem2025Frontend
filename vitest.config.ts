@@ -10,8 +10,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./"),
-      "~": path.resolve(__dirname, "./"),
+      "~": path.resolve(__dirname, "."), // Adiciona o alias para a raiz
+      "@": path.resolve(__dirname, "."), // Adiciona o alias para a raiz
+      "#imports": path.resolve(__dirname, "./.nuxt/imports.d.ts"), // Aponta para as definições de auto-import
     },
   },
 });
