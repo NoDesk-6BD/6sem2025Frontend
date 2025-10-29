@@ -1,3 +1,4 @@
+// tests/ChartCriticalProjects.test.ts
 import { mount } from "@vue/test-utils";
 import ChartCriticalProjects from "../app/components/ChartCriticalProjects.vue";
 

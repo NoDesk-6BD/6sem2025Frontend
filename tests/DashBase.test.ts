@@ -1,3 +1,4 @@
+// tests/DashBase.test.ts
 import { mount } from "@vue/test-utils";
 import DashBase from "../app/components/DashBase.vue";
 

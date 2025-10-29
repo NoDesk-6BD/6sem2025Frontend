@@ -1,3 +1,4 @@
+// app/components/ChartCriticalCategories.vue
 <template>
   <div>
     <client-only>

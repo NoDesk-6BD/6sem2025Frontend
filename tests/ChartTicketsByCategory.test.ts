@@ -1,3 +1,4 @@
+// tests/ChartTicketsByCategory.test.ts
 import { mount } from "@vue/test-utils";
 import ChartTicketsByCategory from "../app/components/ChartTicketsByCategory.vue";
 

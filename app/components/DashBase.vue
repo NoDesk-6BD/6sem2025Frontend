@@ -1,3 +1,4 @@
+// app/components/DashBase.vue
 <script setup lang="ts">
 import { defineProps } from "vue";
 

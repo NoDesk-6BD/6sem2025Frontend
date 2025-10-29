@@ -1,3 +1,4 @@
+// app/components/ChartCriticalProjects.vue
 <template>
   <div>
     <client-only>

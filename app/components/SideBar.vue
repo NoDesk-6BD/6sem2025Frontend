@@ -1,6 +1,7 @@
+// app/components/SideBar.vue
 <template>
   <aside
-    class="h-screen transition-all duration-300 flex flex-col fixed lg:relative z-10"
+    class="min-h-screen transition-all duration-300 flex flex-col fixed lg:relative z-10"
     :class="[collapsed ? 'w-20' : 'w-64']"
     style="background: linear-gradient(180deg, #192f4e 5%, #1c314f 100%)"
   >

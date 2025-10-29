@@ -1,3 +1,4 @@
+// app/components/ChartTicketsByCategory.vue
 <template>
   <div>
     <client-only>

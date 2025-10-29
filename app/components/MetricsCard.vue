@@ -1,3 +1,4 @@
+//app/components/MetricsCard.vue
 <script setup lang="ts">
 import { defineProps, computed, toRef } from "vue";
 

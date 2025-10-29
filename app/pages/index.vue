@@ -1,11 +1,17 @@
+// app/pages/index.vue
 <template>
   <div class="flex flex-col p-2 main-content">
     <div>
-      <div class="grid grid-cols-2">
-        <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold">KPI Cards</h1>
         <TimeFilter @update-range="onRangeUpdate" />
       </div>
-
+      <!--<div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 items-center">
+        <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
+        <div class="flex justify-end">
+          <TimeFilter @update-range="onRangeUpdate" />
+          </div>
+      </div>-->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
           titulo-metrica="Métrica 1"

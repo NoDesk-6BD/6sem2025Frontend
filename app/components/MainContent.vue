@@ -1,3 +1,4 @@
+// app/components/MainContent.vue
 <template>
   <UContainer class="main-content">
     <div class="metrics-cards">

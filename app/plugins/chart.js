@@ -1,4 +1,4 @@
-// plugins/chart.ts
+// app/plugins/chart.ts
 import {
   Chart as ChartJS,
   Title,

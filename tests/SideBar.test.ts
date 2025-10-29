@@ -1,3 +1,4 @@
+// tests/SideBar.test.ts
 import { mount } from "@vue/test-utils";
 import SideBar from "../app/components/SideBar.vue";
 
