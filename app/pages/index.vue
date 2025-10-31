@@ -6,12 +6,7 @@
         <h1 class="text-2xl font-bold">KPI Cards</h1>
         <TimeFilter @update-range="onRangeUpdate" />
       </div>
-      <!--<div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 items-center">
-        <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
-        <div class="flex justify-end">
-          <TimeFilter @update-range="onRangeUpdate" />
-          </div>
-      </div>-->
+
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
           titulo-metrica="Métrica 1"
@@ -57,7 +52,16 @@
         :dash-name="dashNameList[1] ?? ''"
         :title-style="chartTitleClass"
       >
-        <ChartCriticalProjects :chart-data="CriticalProjectsData" />
+        <div class="flex flex-col h-full">
+          <div class="flex-1">
+            <ChartCriticalProjects :chart-data="CriticalProjectsData" />
+          </div>
+
+          <CustomLegend
+            :labels="CriticalProjectsData.labels ?? []"
+            :colors="CriticalProjectsData.datasets[0]?.backgroundColor ?? []"
+          />
+        </div>
       </dash-base>
 
       <dash-base
@@ -78,6 +82,7 @@ import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
 import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
+import CustomLegend from "~/components/CustomLegend.vue";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
@@ -230,7 +235,10 @@ async function fetchCriticalProjects(params?: {
           // CORREÇÃO 4: Mapeia a contagem de tickets (open_tickets)
           data: projectRows.map((p) => p.open_tickets),
           borderWidth: 1,
-          backgroundColor: colors[0],
+          backgroundColor: projectRows.map(
+            (_, index) => colors[index % colors.length],
+          ),
+          // Antes estava: backgroundColor: colors[0],  Agora, mapeamos o array de cores para que cada projeto tenha uma cor diferente.
         },
       ],
     };

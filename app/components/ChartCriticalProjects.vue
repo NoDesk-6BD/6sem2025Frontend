@@ -23,12 +23,12 @@ const chartOptions = ref<ChartOptions<"bar">>({
   plugins: {
     legend: {
       display: false, // Legenda geral do gráfico
-      position: "bottom",
+      /*      position: "bottom",
       labels: {
         usePointStyle: true,
         padding: 15,
         boxWidth: 20,
-      },
+      },*/
     },
     title: { display: false },
     tooltip: {
