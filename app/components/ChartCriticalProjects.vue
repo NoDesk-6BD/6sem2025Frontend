@@ -30,8 +30,20 @@ const chartOptions = ref<ChartOptions<"bar">>({
         boxWidth: 20,
       },
     },
-    title: {
-      display: false,
+    title: { display: false },
+    tooltip: {
+      callbacks: {
+        // Esta função controla o título (a primeira linha) do tooltip. Retornar null ou uma string vazia remove o título completamente.
+        title: function (_context) {
+          return null;
+        },
+        // Esta função controla a linha principal do tooltip (a que tem a cor).
+        label: function (context) {
+          // 'context.label' já contém o nome do projeto para a barra selecionada. O Chart.js adiciona a caixinha colorida ([cor]) auto.
+          const projectName = context.label || "";
+          return projectName;
+        },
+      },
     },
     datalabels: {
       color: "#ffffff", // Define a cor do texto para branco
