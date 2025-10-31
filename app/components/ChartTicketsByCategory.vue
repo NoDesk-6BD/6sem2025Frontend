@@ -36,6 +36,34 @@ const chartOptions = ref<ChartOptions<"bar">>({
     title: {
       display: false,
     },
+    // POrcentagem gráficos ND-66
+    tooltip: {
+      callbacks: {
+        // Esta função personaliza o texto de cada item no tooltip
+        label: function (context) {
+          // Pega o nome da categoria (ex: "Hardware")
+          const label = context.dataset.label || "";
+          // Pega o valor numérico do ponto/barra
+          const valorDoPonto = context.parsed.y;
+
+          // Calcula a soma de todas as categorias para o mesmo mês
+          let totalDoMes = 0;
+          context.chart.data.datasets.forEach((dataset) => {
+            // Soma o valor de cada dataset no mesmo índice (mesmo mês)
+            if (typeof dataset.data[context.dataIndex] === "number") {
+              totalDoMes += dataset.data[context.dataIndex] as number;
+            }
+          });
+
+          // Calcula a porcentagem, evitando divisão por zero
+          const porcentagem =
+            totalDoMes > 0 ? ((valorDoPonto / totalDoMes) * 100).toFixed(2) : 0;
+
+          // Retorna o texto final formatado
+          return `${label}: (${porcentagem}%)`;
+        },
+      },
+    },
     // CORREÇÃO: Configuração dos datalabels para exibição vertical
     datalabels: {
       display: true, // Habilita a exibição dos valores

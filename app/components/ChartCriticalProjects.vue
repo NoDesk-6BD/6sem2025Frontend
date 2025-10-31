@@ -22,7 +22,7 @@ const chartOptions = ref<ChartOptions<"bar">>({
   aspectRatio: 2.2,
   plugins: {
     legend: {
-      display: true,
+      display: false, // Legenda geral do gráfico
       position: "bottom",
       labels: {
         usePointStyle: true,
@@ -30,13 +30,16 @@ const chartOptions = ref<ChartOptions<"bar">>({
         boxWidth: 20,
       },
     },
-    title: { display: false },
+    title: {
+      display: false,
+    },
     datalabels: {
-      color: "#fff",
-      align: "end",
+      color: "#ffffff", // Define a cor do texto para branco
+      align: "start",
       anchor: "end",
       font: {
         weight: "bold",
+        size: 12, // Ajuste o tamanho da fonte se necessário
       },
       formatter: (value: number) => {
         return value.toLocaleString("pt-BR");
@@ -50,9 +53,10 @@ const chartOptions = ref<ChartOptions<"bar">>({
     y: {
       grid: { display: false },
       ticks: {
+        display: false,
         padding: 5,
         crossAlign: "far",
-        callback: function (value: string | number) {
+        /*       callback: function (value: string | number) {
           const label = this.getLabelForValue
             ? typeof value === "number"
               ? this.getLabelForValue(value)
@@ -60,7 +64,7 @@ const chartOptions = ref<ChartOptions<"bar">>({
             : (value?.toString() ?? "");
           // A expressão regular original para quebra de linha.
           return label.match(/.{1,18}(\s|$)/g) || [label];
-        },
+        }, */
       },
     },
   },
