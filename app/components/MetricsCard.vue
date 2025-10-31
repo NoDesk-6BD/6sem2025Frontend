@@ -1,6 +1,6 @@
 //app/components/MetricsCard.vue
 <script setup lang="ts">
-import { defineProps, computed, toRef } from "vue";
+import { computed, toRef } from "vue";
 
 const props = defineProps<{
   tituloMetrica: string;
