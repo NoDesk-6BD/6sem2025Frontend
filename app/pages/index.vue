@@ -87,9 +87,9 @@ import CustomLegend from "~/components/CustomLegend.vue";
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 const dashNameList = [
-  "Chamados por Categoria",
+  "Evolução de Chamados por Categoria",
   "Projetos Críticos",
-  "Categorias Críticas",
+  "Subcategorias Críticas",
 ];
 
 const toast = useToast();
@@ -137,8 +137,6 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   datasets: [],
 });
 
-const colorsDoughnut = ["#005691", "#2C89C9", "#1E78B6", "#0F67A4", "#3B9ADB"];
-
 const colors = [
   "#1E78B6", // Azul
   "#EF4444", // Vermelho
@@ -152,38 +150,83 @@ const colors = [
   "#E11D48", // Vermelho Escuro
 ];
 
+// Função utilitária para pegar o último dia disponível
+function getLastDateKey(obj: Record<string, unknown>) {
+  const keys = Object.keys(obj);
+  return keys.sort().at(-1) ?? "";
+}
+
+// Função utilitária para pegar os dados de um período
+function getDataByPeriod(
+  obj: Record<string, unknown>,
+  start: string,
+  end: string,
+): unknown[] {
+  const keys = Object.keys(obj)
+    .filter((date) => date >= start && date <= end)
+    .sort();
+  return keys.map((date) => (obj as Record<string, unknown[]>)[date]).flat();
+}
+
+// Função utilitária para pegar os últimos N dias disponíveis
+function getLastNDates(obj: Record<string, unknown>, n: number) {
+  const keys = Object.keys(obj).sort();
+  return keys.slice(-n);
+}
+
+// Função para somar counts por nome
+function sumByName(arr: { name: string; count: number }[]) {
+  const map = new Map<string, number>();
+  arr.forEach((item) => {
+    map.set(item.name, (map.get(item.name) ?? 0) + item.count);
+  });
+  return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+}
+
+// Novo range: de azul escuro (#001a33) até azul claro (#3B9ADB)
+function getBlueShade(value: number, min: number, max: number) {
+  const ratio = (value - min) / Math.max(1, max - min);
+  // Azul escuro: r=0, g=26, b=51
+  // Azul claro:  r=59, g=154, b=219
+  const r = Math.round(0 + ratio * (59 - 0));
+  const g = Math.round(26 + ratio * (154 - 26));
+  const b = Math.round(51 + ratio * (219 - 51));
+  return `rgb(${r},${g},${b})`;
+}
+
 async function fetchCriticalCategories(params?: {
   start_date?: string;
   end_date?: string;
 }) {
   try {
-    const config = useRuntimeConfig();
-
-    // monta query string somente se tiver params válidos
-    const query =
-      params?.start_date && params?.end_date
-        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
-        : "";
-
-    const res = await $fetch<Category[]>(
-      `${config.public.apiBase}/dashboard/categories${query}`,
+    const res = await $fetch<Record<string, unknown>>(
+      `http://localhost:8080/critical_categories`,
     );
 
-    if (!res || !Array.isArray(res)) {
-      console.error("Resposta inválida do backend:", res);
-      toast.add({
-        title: `Erro ao carregar dados do gráfico: ${dashNameList[2] ?? ""}`,
-      });
-      return;
+    let data: { name: string; count: number }[] = [];
+    if (params?.start_date && params?.end_date) {
+      data = getDataByPeriod(res, params.start_date, params.end_date) as {
+        name: string;
+        count: number;
+      }[];
+      data = sumByName(data); // soma por nome
+    } else {
+      const lastDate = getLastDateKey(res);
+      data = (res[lastDate] as { name: string; count: number }[]) ?? [];
     }
 
+    // Calcula min/max para escala
+    const counts = data.map((c) => c.count);
+    const min = Math.min(...counts);
+    const max = Math.max(...counts);
+
     CriticalCategoriesData.value = {
-      labels: res.map((c) => c.name),
+      labels: data.map((c) => c.name),
       datasets: [
         {
           label: "Categorias Críticas",
-          data: res.flatMap((c) => c.count),
-          backgroundColor: colorsDoughnut.slice(0, res.length),
+          data: data.map((c) => c.count),
+          backgroundColor: data.map((c) => getBlueShade(c.count, min, max)),
           borderWidth: 1,
         },
       ],
@@ -201,7 +244,9 @@ async function fetchCriticalProjects(params?: {
   end_date?: string;
 }) {
   try {
-    const config = useRuntimeConfig();
+    const res = await $fetch<Record<string, unknown>>(
+      `http://localhost:8080/critical_projects`,
+    );
 
     const query =
       params?.start_date && params?.end_date
@@ -255,7 +300,9 @@ async function fetchTicketsByCategory(params?: {
   end_date?: string;
 }) {
   try {
-    const config = useRuntimeConfig();
+    const res = await $fetch<Record<string, unknown>>(
+      `http://localhost:8080/tickets_evolution`,
+    );
 
     const query =
       params?.start_date && params?.end_date
@@ -326,7 +373,7 @@ function onRangeUpdate(payload: { start_date: string; end_date: string }) {
   fetchTicketsByCategory(payload);
 }
 
-// chamada inicial sem filtros → pega os 60 dias do backend
+// Ao iniciar, mostra os últimos 7 dias
 fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
