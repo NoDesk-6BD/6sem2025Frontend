@@ -46,4 +46,3 @@ const chartOptions = ref<ChartOptions<"doughnut">>({
   },
 });
 </script>
->
