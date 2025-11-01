@@ -1,4 +1,6 @@
-/* Cartões de métricas */
+/* app/assets/css/ComponentAssets/MainContent.css */
+/* Define a regra de 4 colunas para os cards, um grid e 2x2 para os gráficos, o que impede a responsividades.
+Comentar todas as regras. Ele não é mais necessário, pois o index.vue já cuida de tudo
 
 .metrics-cards {
   display: grid;
@@ -27,7 +29,7 @@
   font-weight: bold;
 }
 
-/* Região dos gráficos */
+/* Região dos gráficos
 
 .dash-boards {
   display: grid;
@@ -47,3 +49,5 @@
   border-radius: 8px;
   padding: 10px;
 }
+
+*/

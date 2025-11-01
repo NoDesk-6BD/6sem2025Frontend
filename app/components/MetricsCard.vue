@@ -1,3 +1,4 @@
+//app/components/MetricsCard.vue
 <script setup lang="ts">
 import { defineProps, computed, toRef } from "vue";
 
@@ -34,8 +35,23 @@ const corValor = computed(() => {
 </script>
 
 <template>
-  <UCard class="bg-white shadow-md rounded-lg">
-    <template #header>
+  <UCard
+    class="bg-white shadow-md rounded-lg"
+    :ui="{ body: { padding: 'py-2 px-4' } }"
+  >
+    <div class="flex justify-between items-center">
+      <h1 class="text-gray-500 font-medium text-lg">
+        {{ props.tituloMetrica }}
+      </h1>
+
+      <div :class="corValor" class="text-xl font-bold">
+        {{ props.valorMetrica }}
+      </div>
+    </div>
+  </UCard>
+</template>
+<!-- template #header
+    <template></template>
       <h1 class="text-gray-500 font-medium text-xl">
         {{ props.tituloMetrica }}
       </h1>
@@ -58,4 +74,4 @@ const corValor = computed(() => {
 :deep(.sm\:p-6) {
   padding-left: 0.8rem !important;
 }
-</style>
+</style> -->

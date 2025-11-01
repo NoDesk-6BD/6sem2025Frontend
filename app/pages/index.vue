@@ -1,12 +1,18 @@
+// app/pages/index.vue
 <template>
   <div class="flex flex-col p-2 main-content">
     <div>
-      <div class="grid grid-cols-2">
-        <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold">KPI Cards</h1>
         <TimeFilter @update-range="onRangeUpdate" />
       </div>
-
-      <div class="grid grid-cols-4 gap-2 mb-2">
+      <!--<div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 items-center">
+        <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
+        <div class="flex justify-end">
+          <TimeFilter @update-range="onRangeUpdate" />
+          </div>
+      </div>-->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
           titulo-metrica="Métrica 1"
           :valor-metrica="3"
@@ -38,9 +44,9 @@
       </div>
     </div>
 
-    <div id="charts" class="grid grid-cols-2 gap-2">
+    <div id="charts" class="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-4">
       <dash-base
-        class="col-span-2 col-start-1"
+        class="col-span-1 lg:col-span-2 col-start-1"
         :dash-name="dashNameList[0] ?? ''"
         :title-style="chartTitleClass"
       >
@@ -66,11 +72,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import type { ChartData } from "chart.js";
+import type { ChartData, ChartDataset } from "chart.js";
 import { useToast, useRuntimeConfig } from "#imports";
 import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
+import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
@@ -91,6 +98,21 @@ interface Category {
 
 interface TicketsByCategory {
   itens: Category[];
+}
+
+// NOVAS INTERFACES para o JSON retornado pelo backend
+interface CriticalProjectRow {
+  product_id: number;
+  product_name: string;
+  open_tickets: number;
+}
+
+interface CriticalProjectsResponse {
+  id: string;
+  generated_at: string;
+  limit: number;
+  open_status_ids: number[];
+  rows: CriticalProjectRow[]; // Onde a lista de projetos reside
 }
 
 type TicketsDataset = ChartDataset<"line", number[]>;
@@ -181,31 +203,39 @@ async function fetchCriticalProjects(params?: {
         ? `?start_date=${params.start_date}&end_date=${params.end_date}`
         : "";
 
-    const res = await $fetch<Category[]>(
+    // CORREÇÃO 1: Tipagem correta para a resposta da API (um array com um objeto dentro)
+    const result = await $fetch<CriticalProjectsResponse[]>(
       `${config.public.apiBase}/dashboard/critical_projects${query}`,
     );
+    // CORREÇÃO 2: Extrai o array de linhas de projetos de dentro da resposta
+    const projectRows = result?.[0]?.rows;
 
-    if (!res || !Array.isArray(res)) {
-      console.error("Resposta inválida do backend:", res);
+    if (!projectRows || !Array.isArray(projectRows)) {
+      console.error("Resposta inválida ou sem 'rows' no backend:", result);
       toast.add({
         title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
       });
       return;
     }
 
+    // LÓGICA RESTAURADA: Gera um único dataset, como no seu código original
     CriticalProjectsData.value = {
-      labels: res.map((c) => formatLabel(c.name, 18).join(" ")),
+      // CORREÇÃO 3: Mapeia o nome do projeto (product_name) e junta com a formatação original
+      labels: projectRows.map((p) =>
+        _formatLabel(p.product_name, 18).join(" "),
+      ),
       datasets: [
         {
           label: "Projetos Críticos",
-          data: res.flatMap((c) => c.count ?? 0),
+          // CORREÇÃO 4: Mapeia a contagem de tickets (open_tickets)
+          data: projectRows.map((p) => p.open_tickets),
           borderWidth: 1,
           backgroundColor: colors[0],
         },
       ],
     };
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao buscar projetos críticos:", error);
     toast.add({
       title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
     });
@@ -238,10 +268,35 @@ async function fetchTicketsByCategory(params?: {
       return;
     }
 
-    const abscissa = res.map((c) => c.abscissa);
+    //    const abscissa = res.map((c) => c.abscissa);
+    // CORREÇÃO: Mapeamento para traduzir os meses
+    const monthMap: { [key: string]: string } = {
+      Jan: "Jan",
+      Feb: "Fev",
+      Mar: "Mar",
+      Apr: "Abr",
+      May: "Mai",
+      Jun: "Jun",
+      Jul: "Jul",
+      Aug: "Ago",
+      Sep: "Set",
+      Oct: "Out",
+      Nov: "Nov",
+      Dec: "Dez",
+    };
+
+    const abscissa = res.length > 0 ? res[0].abscissa : [];
+
+    // Traduz as datas do eixo X
+    const translatedAbscissa = abscissa.map((dateString) => {
+      const [month, year] = dateString.split("/");
+      const translatedMonth = monthMap[month] || month; // Usa a tradução ou mantém o original se não encontrar
+      return `${translatedMonth}/${year}`;
+    });
 
     TicketsByCategoryData.value = {
-      labels: abscissa[0] ?? [], // usa a abscissa da primeira categoria
+      //      labels: abscissa[0] ?? [], // usa a abscissa da primeira categoria
+      labels: translatedAbscissa, // Usa o array de datas traduzidas
       datasets: res.map<TicketsDataset>((c, index) => ({
         label: c.name,
         data: c.count,
@@ -268,7 +323,8 @@ fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
 
-const formatLabel = (str: string, maxLength: number): string[] => {
+const _formatLabel = (str: string, maxLength: number): string[] => {
+  // Renomeado para _formatLabel
   const words = str.split(" ");
   const lines: string[] = [];
   let currentLine = "";
@@ -289,9 +345,10 @@ const formatLabel = (str: string, maxLength: number): string[] => {
   if (lines.length <= 1) {
     return lines;
   }
-
-  const longestLineLength = Math.max(...lines.map((line) => line.length));
-  return lines.map((line) => line.padEnd(longestLineLength, " "));
+  // CORREÇÃO: Remove a lógica de padEnd (originalmente comentada)
+  //const longestLineLength = Math.max(...lines.map((line) => line.length));
+  //return lines.map((line) => line.padEnd(longestLineLength, " "));
+  return lines;
 };
 
 onMounted(() => {
