@@ -1,6 +1,6 @@
 // app/components/DashBase.vue
 <script setup lang="ts">
-import { defineProps } from "vue";
+// import { defineProps } from "vue"; // defineProps é um macro global em <script setup>
 
 const props = defineProps<{
   dashName: string;
