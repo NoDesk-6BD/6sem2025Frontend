@@ -1,3 +1,4 @@
+// app/components/BarChart.vue
 <script setup lang="ts">
 import { Bar } from "vue-chartjs";
 import type { ChartData, ChartOptions } from "chart.js";

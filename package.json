@@ -8,7 +8,10 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "nuxt test"
+    "test": "nuxt test",
+    "lint": "npx eslint .",
+    "format": "prettier --write .",
+    "check:format": "prettier --check ."
   },
   "dependencies": {
     "@nuxt/eslint": "^1.9.0",
@@ -29,6 +32,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@vue/test-utils": "^2.4.6",
+    "canvas": "^3.2.0",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2"
   }

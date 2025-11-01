@@ -1,3 +1,4 @@
+// tests/HelloWorld.test.ts
 import { mount } from "@vue/test-utils";
 import AppAlert from "../app/components/AppAlert.vue";
 

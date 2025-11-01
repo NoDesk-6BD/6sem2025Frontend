@@ -1,3 +1,4 @@
+// app/components/ChartCriticalCategories.vue
 <template>
   <div>
     <client-only>
@@ -7,8 +8,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps } from "vue";
+import { ref } from "vue";
 import type { ChartData, ChartOptions } from "chart.js";
+import DoughnutChart from "./DoughnutChart.vue"; // Garanta que a importação existe
 
 const props = defineProps<{
   chartData: ChartData<"doughnut", number[], string>;
@@ -28,6 +30,18 @@ const chartOptions = ref<ChartOptions<"doughnut">>({
     },
     title: {
       display: false,
+    },
+    // CORREÇÃO: Adiciona a configuração para os rótulos de dados (datalabels)
+    datalabels: {
+      color: "#ffffff", // Define a cor do texto para branco
+      font: {
+        weight: "bold", // Deixa o texto em negrito para melhor leitura
+        size: 14,
+      },
+      // Formata o número para o padrão brasileiro (com pontos como separadores de milhar)
+      formatter: (value: number) => {
+        return value.toLocaleString("pt-BR");
+      },
     },
   },
 });

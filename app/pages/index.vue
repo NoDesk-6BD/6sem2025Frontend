@@ -1,12 +1,13 @@
+// app/pages/index.vue
 <template>
   <div class="flex flex-col p-2 main-content">
     <div>
-      <div class="grid grid-cols-2 align-items-center">
-        <h1 class="text-2xl font-bold mb-4 self-center">KPI Cards</h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold">KPI Cards</h1>
         <TimeFilter @update-range="onRangeUpdate" />
       </div>
 
-      <div class="grid grid-cols-4 gap-2 mb-2">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
           titulo-metrica="Métrica 1"
           :valor-metrica="3"
@@ -38,9 +39,9 @@
       </div>
     </div>
 
-    <div id="charts" class="grid grid-cols-2 gap-2">
+    <div id="charts" class="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-4">
       <dash-base
-        class="col-span-2 col-start-1"
+        class="col-span-1 lg:col-span-2 col-start-1"
         :dash-name="dashNameList[0] ?? ''"
         :title-style="chartTitleClass"
       >
@@ -51,7 +52,16 @@
         :dash-name="dashNameList[1] ?? ''"
         :title-style="chartTitleClass"
       >
-        <ChartCriticalProjects :chart-data="CriticalProjectsData" />
+        <div class="flex flex-col h-full">
+          <div class="flex-1">
+            <ChartCriticalProjects :chart-data="CriticalProjectsData" />
+          </div>
+
+          <CustomLegend
+            :labels="CriticalProjectsData.labels ?? []"
+            :colors="CriticalProjectsData.datasets[0]?.backgroundColor ?? []"
+          />
+        </div>
       </dash-base>
 
       <dash-base
@@ -66,11 +76,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import type { ChartData } from "chart.js";
-import { useToast } from "#imports";
+import type { ChartData, ChartDataset } from "chart.js";
+import { useToast, useRuntimeConfig } from "#imports";
 import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
+import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
+import CustomLegend from "~/components/CustomLegend.vue";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
@@ -81,6 +93,34 @@ const dashNameList = [
 ];
 
 const toast = useToast();
+
+interface Category {
+  id: string;
+  name: string;
+  count: number[];
+  abscissa: string[];
+}
+
+interface TicketsByCategory {
+  itens: Category[];
+}
+
+// NOVAS INTERFACES para o JSON retornado pelo backend
+interface CriticalProjectRow {
+  product_id: number;
+  product_name: string;
+  open_tickets: number;
+}
+
+interface CriticalProjectsResponse {
+  id: string;
+  generated_at: string;
+  limit: number;
+  open_status_ids: number[];
+  rows: CriticalProjectRow[]; // Onde a lista de projetos reside
+}
+
+type TicketsDataset = ChartDataset<"line", number[]>;
 
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
@@ -208,44 +248,47 @@ async function fetchCriticalProjects(params?: {
       `http://localhost:8080/critical_projects`,
     );
 
-    let data: { id: string; name: string; count: number }[] = [];
-    if (params?.start_date && params?.end_date) {
-      const rawData = getDataByPeriod(
-        res,
-        params.start_date,
-        params.end_date,
-      ) as { id: string; name: string; count: number }[];
-      // soma por id e nome
-      const map = new Map<
-        string,
-        { id: string; name: string; count: number }
-      >();
-      rawData.forEach((item) => {
-        const key = item.id + item.name;
-        if (!map.has(key))
-          map.set(key, { id: item.id, name: item.name, count: 0 });
-        map.get(key)!.count += item.count;
+    const query =
+      params?.start_date && params?.end_date
+        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
+        : "";
+
+    // CORREÇÃO 1: Tipagem correta para a resposta da API (um array com um objeto dentro)
+    const result = await $fetch<CriticalProjectsResponse[]>(
+      `${config.public.apiBase}/dashboard/critical_projects${query}`,
+    );
+    // CORREÇÃO 2: Extrai o array de linhas de projetos de dentro da resposta
+    const projectRows = result?.[0]?.rows;
+
+    if (!projectRows || !Array.isArray(projectRows)) {
+      console.error("Resposta inválida ou sem 'rows' no backend:", result);
+      toast.add({
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
       });
-      data = Array.from(map.values());
-    } else {
-      const lastDate = getLastDateKey(res);
-      data =
-        (res[lastDate] as { id: string; name: string; count: number }[]) ?? [];
+      return;
     }
 
+    // LÓGICA RESTAURADA: Gera um único dataset, como no seu código original
     CriticalProjectsData.value = {
-      labels: data.map((c) => formatLabel(c.name, 18).join(" ")),
+      // CORREÇÃO 3: Mapeia o nome do projeto (product_name) e junta com a formatação original
+      labels: projectRows.map((p) =>
+        _formatLabel(p.product_name, 18).join(" "),
+      ),
       datasets: [
         {
           label: "Projetos Críticos",
-          data: data.map((c) => c.count ?? 0),
+          // CORREÇÃO 4: Mapeia a contagem de tickets (open_tickets)
+          data: projectRows.map((p) => p.open_tickets),
           borderWidth: 1,
-          backgroundColor: colors[0],
+          backgroundColor: projectRows.map(
+            (_, index) => colors[index % colors.length],
+          ),
+          // Antes estava: backgroundColor: colors[0],  Agora, mapeamos o array de cores para que cada projeto tenha uma cor diferente.
         },
       ],
     };
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao buscar projetos críticos:", error);
     toast.add({
       title: `Erro ao carregar dados do gráfico: ${dashNameList[1] ?? ""}`,
     });
@@ -261,48 +304,60 @@ async function fetchTicketsByCategory(params?: {
       `http://localhost:8080/tickets_evolution`,
     );
 
-    let dateKeys: string[] = [];
-    if (params?.start_date && params?.end_date) {
-      dateKeys = Object.keys(res)
-        .filter(
-          (date) =>
-            params?.start_date !== undefined &&
-            params?.end_date !== undefined &&
-            date >= params.start_date &&
-            date <= params.end_date,
-        )
-        .sort();
-    } else {
-      // Últimos 7 dias por padrão
-      dateKeys = getLastNDates(res, 7);
+    const query =
+      params?.start_date && params?.end_date
+        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
+        : "";
+
+    const result = await $fetch<TicketsByCategory>(
+      `${config.public.apiBase}/dashboard/tickets_evolution${query}`,
+    );
+
+    const res = result.itens;
+
+    if (!res || !Array.isArray(res)) {
+      console.error("Resposta inválida do backend:", res);
+      toast.add({
+        title: `Erro ao carregar dados do gráfico: ${dashNameList[0] ?? ""}`,
+      });
+      return;
     }
 
-    // Agrupa os dados por name
-    const nameSet = new Set<string>();
-    dateKeys.forEach((date) => {
-      (res[date] as { name: string }[]).forEach((item) =>
-        nameSet.add(item.name),
-      );
-    });
-    const names = Array.from(nameSet);
+    //    const abscissa = res.map((c) => c.abscissa);
+    // CORREÇÃO: Mapeamento para traduzir os meses
+    const monthMap: { [key: string]: string } = {
+      Jan: "Jan",
+      Feb: "Fev",
+      Mar: "Mar",
+      Apr: "Abr",
+      May: "Mai",
+      Jun: "Jun",
+      Jul: "Jul",
+      Aug: "Ago",
+      Sep: "Set",
+      Oct: "Out",
+      Nov: "Nov",
+      Dec: "Dez",
+    };
 
-    // Para cada name, pega os counts dos dias
-    const datasets = names.map((name, idx) => ({
-      label: name,
-      data: dateKeys.map((date) => {
-        const found = (res[date] as { name: string; count: number }[]).find(
-          (item) => item.name === name,
-        );
-        return found ? found.count : 0;
-      }),
-      borderColor: colors[idx % colors.length],
-      backgroundColor: colors[idx % colors.length],
-      fill: false,
-    }));
+    const abscissa = res.length > 0 ? res[0].abscissa : [];
+
+    // Traduz as datas do eixo X
+    const translatedAbscissa = abscissa.map((dateString) => {
+      const [month, year] = dateString.split("/");
+      const translatedMonth = monthMap[month] || month; // Usa a tradução ou mantém o original se não encontrar
+      return `${translatedMonth}/${year}`;
+    });
 
     TicketsByCategoryData.value = {
-      labels: dateKeys,
-      datasets,
+      //      labels: abscissa[0] ?? [], // usa a abscissa da primeira categoria
+      labels: translatedAbscissa, // Usa o array de datas traduzidas
+      datasets: res.map<TicketsDataset>((c, index) => ({
+        label: c.name,
+        data: c.count,
+        borderColor: colors[index],
+        backgroundColor: colors[index],
+      })),
     };
   } catch (error) {
     console.error("Erro ao buscar tickets:", error);
@@ -323,7 +378,8 @@ fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
 
-const formatLabel = (str: string, maxLength: number): string[] => {
+const _formatLabel = (str: string, maxLength: number): string[] => {
+  // Renomeado para _formatLabel
   const words = str.split(" ");
   const lines: string[] = [];
   let currentLine = "";
@@ -344,9 +400,10 @@ const formatLabel = (str: string, maxLength: number): string[] => {
   if (lines.length <= 1) {
     return lines;
   }
-
-  const longestLineLength = Math.max(...lines.map((line) => line.length));
-  return lines.map((line) => line.padEnd(longestLineLength, " "));
+  // CORREÇÃO: Remove a lógica de padEnd (originalmente comentada)
+  //const longestLineLength = Math.max(...lines.map((line) => line.length));
+  //return lines.map((line) => line.padEnd(longestLineLength, " "));
+  return lines;
 };
 
 onMounted(() => {

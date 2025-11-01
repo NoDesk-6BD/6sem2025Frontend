@@ -1,4 +1,4 @@
-// plugins/chart.ts
+// app/plugins/chart.ts
 import {
   Chart as ChartJS,
   Title,
@@ -12,6 +12,8 @@ import {
   ArcElement,
 } from "chart.js";
 
+import ChartDataLabels from "chartjs-plugin-datalabels";
+
 export default defineNuxtPlugin(() => {
   // Registra os módulos necessários do Chart.js
   ChartJS.register(
@@ -24,5 +26,6 @@ export default defineNuxtPlugin(() => {
     CategoryScale,
     LinearScale,
     ArcElement,
+    ChartDataLabels,
   );
 });

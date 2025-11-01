@@ -1,3 +1,4 @@
+// app/components/LineChart.vue
 <script setup lang="ts">
 import { Line } from "vue-chartjs";
 import type { ChartData, ChartOptions } from "chart.js";

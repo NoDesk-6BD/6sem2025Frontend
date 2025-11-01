@@ -1,3 +1,4 @@
+// app/components/TimeFilter.vue
 <template>
   <div class="flex items-center justify-end">
     <label class="mr-2">Período selecionado:</label>

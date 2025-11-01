@@ -1,11 +1,9 @@
+// app/layouts/default.vue
 <template>
   <div class="flex">
     <Sidebar :collapsed="collapsed" />
 
-    <main
-      class="flex-1 min-h-screen transition-all duration-300 bg-gray-100"
-      :class="{ 'ml-64': !collapsed, 'ml-20': collapsed }"
-    >
+    <main class="flex-1 min-h-screen bg-gray-100">
       <slot />
     </main>
   </div>
