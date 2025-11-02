@@ -1,5 +1,4 @@
+// app/pages/login.vue
 <template>
-    <div>
-        Login
-    </div>
+  <div>Login</div>
 </template>

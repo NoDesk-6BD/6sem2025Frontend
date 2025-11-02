@@ -1,3 +1,4 @@
+// app/components/DoughnutChart.vue
 <script setup lang="ts">
 import { Doughnut } from "vue-chartjs";
 import type { ChartData, ChartOptions } from "chart.js";
