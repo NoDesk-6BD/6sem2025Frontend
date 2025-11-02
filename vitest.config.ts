@@ -22,12 +22,6 @@ export default defineConfig({
       // ✅ Corrige caminhos Nuxt/Vue
       "~": fileURLToPath(new URL("./app", import.meta.url)),
       "@": fileURLToPath(new URL("./app", import.meta.url)),
-
-      // ⚠️ Não aponte para `.d.ts`, pois não é um módulo executável.
-      // Se precisar mockar #imports, já está sendo feito no setup.ts
-      "#imports": fileURLToPath(
-        new URL("./tests/mocks/nuxt-imports.ts", import.meta.url),
-      ),
     },
   },
 });
