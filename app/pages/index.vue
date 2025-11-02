@@ -9,15 +9,15 @@
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
-          titulo-metrica="Métrica 1"
-          :valor-metrica="3"
-          :bottom-limit="4"
-          :top-limit="10"
-          :relation="true"
+          titulo-metrica="Tickets Expirados"
+          :valor-metrica="totalExpiredTickets"
+          :bottom-limit="50"
+          :top-limit="100"
+          :relation="false"
         />
         <MetricsCard
           titulo-metrica="Métrica 2"
-          :valor-metrica="6"
+          :valor-metrica="9"
           :bottom-limit="3"
           :top-limit="10"
           :relation="false"
@@ -31,7 +31,7 @@
         />
         <MetricsCard
           titulo-metrica="Métrica 4"
-          :valor-metrica="12"
+          :valor-metrica="9"
           :bottom-limit="5"
           :top-limit="10"
           :relation="true"
@@ -120,6 +120,13 @@ interface CriticalProjectsResponse {
   rows: CriticalProjectRow[]; // Onde a lista de projetos reside
 }
 
+// Interface para a resposta do novo endpoint das métricas de tickets expirados
+interface TotalExpiredTicketsResponse {
+  total_expired_tickets: number;
+  generated_at: string;
+  open_status_ids: number[];
+}
+
 type TicketsDataset = ChartDataset<"line", number[]>;
 
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
@@ -137,6 +144,9 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   datasets: [],
 });
 
+// Ref para armazenar o valor dos tickets expirados
+const totalExpiredTickets = ref<number>(0);
+
 const colorsDoughnut = ["#005691", "#2C89C9", "#1E78B6", "#0F67A4", "#3B9ADB"];
 
 const colors = [
@@ -151,6 +161,37 @@ const colors = [
   "#6366F1", // Indigo
   "#E11D48", // Vermelho Escuro
 ];
+
+// Nova função para buscar o total de tickets expirados
+async function fetchTotalExpiredTickets(params?: {
+  start_date?: string;
+  end_date?: string;
+}) {
+  try {
+    const config = useRuntimeConfig();
+    const query =
+      params?.start_date && params?.end_date
+        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
+        : "";
+
+    // Assumindo que a resposta seja um objeto { "total": 123 }
+    const result = await $fetch<TotalExpiredTicketsResponse>(
+      `${config.public.apiBase}/dashboard/total_expired_tickets${query}`,
+    );
+
+    if (result && typeof result.total_expired_tickets === "number") {
+      totalExpiredTickets.value = result.total_expired_tickets;
+    } else {
+      console.error("Resposta inválida para total_expired_tickets:", result);
+      toast.add({ title: "Erro ao carregar Tickets Expirados" });
+    }
+  } catch (error) {
+    console.error("Erro ao buscar tickets expirados:", error);
+    toast.add({
+      title: `Erro ao carregar dados: Tickets Expirados`,
+    });
+  }
+}
 
 async function fetchCriticalCategories(params?: {
   start_date?: string;
@@ -324,12 +365,14 @@ function onRangeUpdate(payload: { start_date: string; end_date: string }) {
   fetchCriticalCategories(payload);
   fetchCriticalProjects(payload);
   fetchTicketsByCategory(payload);
+  fetchTotalExpiredTickets(payload);
 }
 
 // chamada inicial sem filtros → pega os 60 dias do backend
 fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
+fetchTotalExpiredTickets();
 
 const _formatLabel = (str: string, maxLength: number): string[] => {
   // Renomeado para _formatLabel
@@ -363,5 +406,6 @@ onMounted(() => {
   fetchTicketsByCategory();
   fetchCriticalProjects();
   fetchCriticalCategories();
+  fetchTotalExpiredTickets();
 });
 </script>
