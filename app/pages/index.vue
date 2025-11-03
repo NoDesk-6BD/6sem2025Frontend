@@ -9,15 +9,15 @@
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
-          titulo-metrica="Métrica 1"
-          :valor-metrica="3"
-          :bottom-limit="4"
-          :top-limit="10"
-          :relation="true"
+          titulo-metrica="Tickets Expirados"
+          :valor-metrica="totalExpiredTickets"
+          :bottom-limit="50"
+          :top-limit="100"
+          :relation="false"
         />
         <MetricsCard
           titulo-metrica="Métrica 2"
-          :valor-metrica="6"
+          :valor-metrica="9"
           :bottom-limit="3"
           :top-limit="10"
           :relation="false"
@@ -31,7 +31,7 @@
         />
         <MetricsCard
           titulo-metrica="Métrica 4"
-          :valor-metrica="12"
+          :valor-metrica="9"
           :bottom-limit="5"
           :top-limit="10"
           :relation="true"
@@ -121,6 +121,13 @@ interface CriticalProjectsResponse {
   rows: CriticalProjectRow[]; // Onde a lista de projetos reside
 }
 
+// Interface para a resposta do novo endpoint das métricas de tickets expirados
+//interface TotalExpiredTicketsResponse {
+//  total_expired_tickets: number;
+//  generated_at: string;
+//  open_status_ids: number[];
+//}
+
 type TicketsDataset = ChartDataset<"line", number[]>;
 
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
@@ -137,6 +144,9 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   labels: [],
   datasets: [],
 });
+
+// Ref para armazenar o valor dos tickets expirados
+const totalExpiredTickets = ref<number>(0);
 
 const colors = [
   "#1E78B6", // Azul
@@ -170,10 +180,10 @@ function getDataByPeriod(
 }
 
 // Função utilitária para pegar os últimos N dias disponíveis
-function getLastNDates(obj: Record<string, unknown>, n: number) {
-  const keys = Object.keys(obj).sort();
-  return keys.slice(-n);
-}
+//function getLastNDates(obj: Record<string, unknown>, n: number) {
+//  const keys = Object.keys(obj).sort();
+//  return keys.slice(-n);
+//}
 
 // Função para somar counts por nome
 function sumByName(arr: { name: string; count: number }[]) {
@@ -200,7 +210,7 @@ async function fetchCriticalCategories(params?: {
   end_date?: string;
 }) {
   try {
-    const result = await $fetch<Record<string, unknown>>(
+    const res = await $fetch<Record<string, unknown>>(
       `${config.public.apiBase}/dashboard/categories`,
     );
 
@@ -303,7 +313,7 @@ async function fetchTicketsByCategory(params?: {
         : "";
 
     const result = await $fetch<TicketsByCategory>(
-      `${config.public.apiBase}/dashboard/tickets_evolution`,
+      `${config.public.apiBase}/dashboard/tickets_evolution${query}`,
     );
 
     const res = result.itens;

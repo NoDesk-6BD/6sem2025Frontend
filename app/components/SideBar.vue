@@ -73,6 +73,7 @@ import {
   LogOut,
   ChevronFirst,
 } from "lucide-vue-next";
+
 import { useState } from "#imports";
 
 const collapsed = useState("sidebar-collapsed");
