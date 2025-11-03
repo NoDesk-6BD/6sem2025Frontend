@@ -93,6 +93,7 @@ const dashNameList = [
 ];
 
 const toast = useToast();
+const config = useRuntimeConfig();
 
 interface Category {
   id: string;
@@ -199,8 +200,8 @@ async function fetchCriticalCategories(params?: {
   end_date?: string;
 }) {
   try {
-    const res = await $fetch<Record<string, unknown>>(
-      `http://localhost:8080/critical_categories`,
+    const result = await $fetch<Record<string, unknown>>(
+      `${config.public.apiBase}/dashboard/categories`,
     );
 
     let data: { name: string; count: number }[] = [];
@@ -244,10 +245,6 @@ async function fetchCriticalProjects(params?: {
   end_date?: string;
 }) {
   try {
-    const res = await $fetch<Record<string, unknown>>(
-      `http://localhost:8080/critical_projects`,
-    );
-
     const query =
       params?.start_date && params?.end_date
         ? `?start_date=${params.start_date}&end_date=${params.end_date}`
@@ -300,17 +297,13 @@ async function fetchTicketsByCategory(params?: {
   end_date?: string;
 }) {
   try {
-    const res = await $fetch<Record<string, unknown>>(
-      `http://localhost:8080/tickets_evolution`,
-    );
-
     const query =
       params?.start_date && params?.end_date
         ? `?start_date=${params.start_date}&end_date=${params.end_date}`
         : "";
 
     const result = await $fetch<TicketsByCategory>(
-      `${config.public.apiBase}/dashboard/tickets_evolution${query}`,
+      `${config.public.apiBase}/dashboard/tickets_evolution`,
     );
 
     const res = result.itens;
