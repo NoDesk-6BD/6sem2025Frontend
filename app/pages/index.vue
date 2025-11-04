@@ -10,14 +10,14 @@
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
         <MetricsCard
           titulo-metrica="Tickets Expirados"
-          :valor-metrica="totalExpiredTickets"
+          :valor-metrica="String(totalExpiredTickets)"
           :bottom-limit="50"
           :top-limit="100"
           :relation="false"
         />
         <MetricsCard
           titulo-metrica="Tempo médio de atendimento"
-          :valor-metrica="9"
+          :valor-metrica="MetricsCard2?.valor_metrica ?? ''"
           :bottom-limit="3"
           :top-limit="10"
           :relation="false"
@@ -83,6 +83,7 @@ import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
 import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
 import CustomLegend from "~/components/CustomLegend.vue";
+import MetricsCard from "~/components/MetricsCard.vue";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
@@ -131,8 +132,8 @@ interface CriticalProjectsResponse {
 interface MetricsCardResponse {
   titulo_metrica: string;
   valor_metrica: string;
-  top_limit: string;
-  bottom_limit: string;
+  top_limit: number | string;
+  bottom_limit: number | string;
   relation: boolean;
 }
 
@@ -214,41 +215,39 @@ function getBlueShade(value: number, min: number, max: number) {
   return `rgb(${r},${g},${b})`;
 }
 
-async function fetchMetricsCard(
-  kpi_id: number,
-): Promise<MetricsCardResponse | null> {
-  // ✅ define tipo de retorno
-  try {
-    const res = await $fetch<MetricsCardResponse>(
-      `${config.public.apiBase}/kpi/metrics/${kpi_id}`,
-      {
-        params: { start_date, end_date }, // ✅ inclui params se existirem
-      },
-    );
+async function fetchMetricsCard(): Promise<MetricsCardResponse | null> {
+  const fallback: MetricsCardResponse = {
+    titulo_metrica: "Tempo médio de atendimento",
+    valor_metrica: "18:53",
+    top_limit: "72:00",
+    bottom_limit: "8:00",
+    relation: false,
+  };
 
-    return res; // ✅ retorna o resultado da API
+  try {
+    //const res = await $fetch<MetricsCardResponse>(
+    //  `${config.public.apiBase}/kpi/metrics/${kpi_id}`
+    //);
+
+    MetricsCard2.value = fallback; // ✅ retorna o resultado da API
+    return fallback;
   } catch (error) {
     console.error("Erro ao buscar métricas:", error);
 
     // ✅ objeto de fallback (mock) em caso de erro 404
+
     if (error?.status === 404) {
-      const fallback: MetricsCardResponse = {
-        titulo_metrica: "Tempo médio de atendimento",
-        valor_metrica: "18:53",
-        top_limit: "72:00",
-        bottom_limit: "8:00",
-        relation: false,
-      };
       console.log(fallback);
       return fallback;
     }
 
     toast.add({
-      title: "Erro ao carregar dados do gráfico",
+      title: "Erro ao carregar dados KPI 2",
       description: error?.message ?? "Erro desconhecido.",
     });
 
-    return null; // ✅ retorna null em outros erros
+    console.log(fallback);
+    return fallback; // ✅ retorna null em outros erros
   }
 }
 
@@ -427,7 +426,10 @@ function onRangeUpdate(payload: { start_date: string; end_daet: string }) {
 fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
-MetricsCard2.value = fetchMetricsCard(2);
+// Busca a métrica de forma assíncrona e atualiza o ref quando estiver pronta
+fetchMetricsCard(2).then((res) => {
+  if (res) MetricsCard2.value = res;
+});
 
 const _formatLabel = (str: string, maxLength: number): string[] => {
   // Renomeado para _formatLabel
