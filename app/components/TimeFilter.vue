@@ -17,7 +17,9 @@
         <button ref="hiddenBtn" class="sr-only" tabindex="0">
           Foco oculto
         </button>
-        <div class="flex flex-row gap-2 px-2 py-3 min-w-[400px] items-center">
+        <div
+          class="flex flex-row gap-2 px-2 py-3 min-w-[10vw] max-w-[200px] items-center"
+        >
           <!-- Botões rápidos centralizados na esquerda -->
           <div
             class="flex flex-col gap-1 px-3 justify-center items-center h-80 bg-white border-r border-[#E5E7EB]"

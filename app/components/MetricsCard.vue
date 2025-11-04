@@ -4,31 +4,43 @@ import { computed, toRef } from "vue";
 
 const props = defineProps<{
   tituloMetrica: string;
-  valorMetrica: number;
+  valorMetrica: number | string;
   relation?: boolean;
-  bottomLimit?: number;
-  topLimit?: number;
+  bottomLimit?: number | string;
+  topLimit?: number | string;
 }>();
 
-// toRef para manter reatividade se props mudarem no pai
+// toRef mantém reatividade das props
 const relation = toRef(props, "relation");
 const valor = toRef(props, "valorMetrica");
 const top = toRef(props, "topLimit");
 const bottom = toRef(props, "bottomLimit");
 
-// computed que retorna a classe (Tailwind) — simples e seguro
+// Função auxiliar: tenta converter valores para número
+const toNumber = (val: unknown): number | null => {
+  const num = Number(val);
+  return isNaN(num) ? null : num;
+};
+
+// computed que retorna a cor (Tailwind)
 const corValor = computed(() => {
+  const val = toNumber(valor.value);
+  const topVal = toNumber(top.value);
+  const bottomVal = toNumber(bottom.value);
+
+  // Se não forem numéricos, retorna cor padrão
+  if (val === null || topVal === null || bottomVal === null) {
+    return "text-blue-500";
+  }
+
+  // Caso a relação seja "positiva" (true) ou "negativa" (false)
   if (relation.value !== false) {
-    if (bottom.value !== undefined && valor.value < bottom.value)
-      return "text-red-500";
-    if (top.value !== undefined && valor.value > top.value)
-      return "text-blue-500";
+    if (bottomVal !== undefined && val < bottomVal) return "text-red-500";
+    if (topVal !== undefined && val > topVal) return "text-blue-500";
     return "text-gray-900";
   } else {
-    if (bottom.value !== undefined && valor.value < bottom.value)
-      return "text-blue-500";
-    if (top.value !== undefined && valor.value > top.value)
-      return "text-red-500";
+    if (bottomVal !== undefined && val < bottomVal) return "text-blue-500";
+    if (topVal !== undefined && val > topVal) return "text-red-500";
     return "text-gray-900";
   }
 });
@@ -50,6 +62,7 @@ const corValor = computed(() => {
     </div>
   </UCard>
 </template>
+
 <!-- template #header
     <template></template>
       <h1 class="text-gray-500 font-medium text-xl">
