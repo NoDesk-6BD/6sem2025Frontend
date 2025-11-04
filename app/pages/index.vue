@@ -16,7 +16,7 @@
           :relation="false"
         />
         <MetricsCard
-          titulo-metrica="Métrica 2"
+          titulo-metrica="Tempo médio de atendimento"
           :valor-metrica="9"
           :bottom-limit="3"
           :top-limit="10"
@@ -128,6 +128,14 @@ interface CriticalProjectsResponse {
 //  open_status_ids: number[];
 //}
 
+interface MetricsCardResponse {
+  titulo_metrica: string;
+  valor_metrica: string;
+  top_limit: string;
+  bottom_limit: string;
+  relation: boolean;
+}
+
 type TicketsDataset = ChartDataset<"line", number[]>;
 
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
@@ -147,6 +155,7 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
 
 // Ref para armazenar o valor dos tickets expirados
 const totalExpiredTickets = ref<number>(0);
+const MetricsCard2 = ref<MetricsCardResponse>();
 
 const colors = [
   "#1E78B6", // Azul
@@ -203,6 +212,44 @@ function getBlueShade(value: number, min: number, max: number) {
   const g = Math.round(26 + ratio * (154 - 26));
   const b = Math.round(51 + ratio * (219 - 51));
   return `rgb(${r},${g},${b})`;
+}
+
+async function fetchMetricsCard(
+  kpi_id: number,
+): Promise<MetricsCardResponse | null> {
+  // ✅ define tipo de retorno
+  try {
+    const res = await $fetch<MetricsCardResponse>(
+      `${config.public.apiBase}/kpi/metrics/${kpi_id}`,
+      {
+        params: { start_date, end_date }, // ✅ inclui params se existirem
+      },
+    );
+
+    return res; // ✅ retorna o resultado da API
+  } catch (error) {
+    console.error("Erro ao buscar métricas:", error);
+
+    // ✅ objeto de fallback (mock) em caso de erro 404
+    if (error?.status === 404) {
+      const fallback: MetricsCardResponse = {
+        titulo_metrica: "Tempo médio de atendimento",
+        valor_metrica: "18:53",
+        top_limit: "72:00",
+        bottom_limit: "8:00",
+        relation: false,
+      };
+      console.log(fallback);
+      return fallback;
+    }
+
+    toast.add({
+      title: "Erro ao carregar dados do gráfico",
+      description: error?.message ?? "Erro desconhecido.",
+    });
+
+    return null; // ✅ retorna null em outros erros
+  }
 }
 
 async function fetchCriticalCategories(params?: {
@@ -370,7 +417,7 @@ async function fetchTicketsByCategory(params?: {
   }
 }
 
-function onRangeUpdate(payload: { start_date: string; end_date: string }) {
+function onRangeUpdate(payload: { start_date: string; end_daet: string }) {
   fetchCriticalCategories(payload);
   fetchCriticalProjects(payload);
   fetchTicketsByCategory(payload);
@@ -380,6 +427,7 @@ function onRangeUpdate(payload: { start_date: string; end_date: string }) {
 fetchCriticalCategories();
 fetchCriticalProjects();
 fetchTicketsByCategory();
+MetricsCard2.value = fetchMetricsCard(2);
 
 const _formatLabel = (str: string, maxLength: number): string[] => {
   // Renomeado para _formatLabel
