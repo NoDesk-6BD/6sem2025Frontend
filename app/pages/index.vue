@@ -8,34 +8,10 @@
       </div>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
-        <MetricsCard
-          titulo-metrica="Tickets Expirados"
-          :valor-metrica="String(totalExpiredTickets)"
-          :bottom-limit="50"
-          :top-limit="100"
-          :relation="false"
-        />
-        <MetricsCard
-          titulo-metrica="Tempo médio de atendimento"
-          :valor-metrica="MetricsCard2?.valor_metrica ?? ''"
-          :bottom-limit="3"
-          :top-limit="10"
-          :relation="false"
-        />
-        <MetricsCard
-          titulo-metrica="Métrica 3"
-          :valor-metrica="9"
-          :bottom-limit="3"
-          :top-limit="10"
-          :relation="true"
-        />
-        <MetricsCard
-          titulo-metrica="Métrica 4"
-          :valor-metrica="9"
-          :bottom-limit="5"
-          :top-limit="10"
-          :relation="true"
-        />
+        <MetricsCard v-if="metrics_cards[0]" :payload="metrics_cards[0]" />
+        <MetricsCard v-if="metrics_cards[1]" :payload="metrics_cards[1]" />
+        <MetricsCard v-if="metrics_cards[2]" :payload="metrics_cards[2]" />
+        <MetricsCard v-if="metrics_cards[3]" :payload="metrics_cards[3]" />
       </div>
     </div>
 
@@ -84,6 +60,11 @@ import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
 import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
 import CustomLegend from "~/components/CustomLegend.vue";
 import MetricsCard from "~/components/MetricsCard.vue";
+import type {
+  MetricsCardResponse,
+  CriticalProjectsResponse,
+  TicketsByCategory,
+} from "~/types/interfaces";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
@@ -95,47 +76,6 @@ const dashNameList = [
 
 const toast = useToast();
 const config = useRuntimeConfig();
-
-interface Category {
-  id: string;
-  name: string;
-  count: number[];
-  abscissa: string[];
-}
-
-interface TicketsByCategory {
-  itens: Category[];
-}
-
-// NOVAS INTERFACES para o JSON retornado pelo backend
-interface CriticalProjectRow {
-  product_id: number;
-  product_name: string;
-  open_tickets: number;
-}
-
-interface CriticalProjectsResponse {
-  id: string;
-  generated_at: string;
-  limit: number;
-  open_status_ids: number[];
-  rows: CriticalProjectRow[]; // Onde a lista de projetos reside
-}
-
-// Interface para a resposta do novo endpoint das métricas de tickets expirados
-//interface TotalExpiredTicketsResponse {
-//  total_expired_tickets: number;
-//  generated_at: string;
-//  open_status_ids: number[];
-//}
-
-interface MetricsCardResponse {
-  titulo_metrica: string;
-  valor_metrica: string;
-  top_limit: number | string;
-  bottom_limit: number | string;
-  relation: boolean;
-}
 
 type TicketsDataset = ChartDataset<"line", number[]>;
 
@@ -153,10 +93,6 @@ const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   labels: [],
   datasets: [],
 });
-
-// Ref para armazenar o valor dos tickets expirados
-const totalExpiredTickets = ref<number>(0);
-const MetricsCard2 = ref<MetricsCardResponse>();
 
 const colors = [
   "#1E78B6", // Azul
@@ -189,12 +125,6 @@ function getDataByPeriod(
   return keys.map((date) => (obj as Record<string, unknown[]>)[date]).flat();
 }
 
-// Função utilitária para pegar os últimos N dias disponíveis
-//function getLastNDates(obj: Record<string, unknown>, n: number) {
-//  const keys = Object.keys(obj).sort();
-//  return keys.slice(-n);
-//}
-
 // Função para somar counts por nome
 function sumByName(arr: { name: string; count: number }[]) {
   const map = new Map<string, number>();
@@ -215,39 +145,34 @@ function getBlueShade(value: number, min: number, max: number) {
   return `rgb(${r},${g},${b})`;
 }
 
-async function fetchMetricsCard(): Promise<MetricsCardResponse | null> {
-  const fallback: MetricsCardResponse = {
-    titulo_metrica: "Tempo médio de atendimento",
-    valor_metrica: "18:53",
-    top_limit: "72:00",
-    bottom_limit: "8:00",
-    relation: false,
-  };
-
+async function fetchMetricsCard(
+  kpi_id: number,
+): Promise<MetricsCardResponse | null> {
   try {
-    //const res = await $fetch<MetricsCardResponse>(
-    //  `${config.public.apiBase}/kpi/metrics/${kpi_id}`
-    //);
+    let rota = `${config.public.apiBase}`;
 
-    MetricsCard2.value = fallback; // ✅ retorna o resultado da API
-    return fallback;
-  } catch (error) {
-    console.error("Erro ao buscar métricas:", error);
+    if (kpi_id === 1) {
+      rota += `/dashboard/total_expired_tickets`;
+    } else {
+      rota += `/kpi/${kpi_id}`;
+    }
+    const res = await $fetch<MetricsCardResponse>(rota, { method: "GET" });
 
-    // ✅ objeto de fallback (mock) em caso de erro 404
-
-    if (error?.status === 404) {
-      console.log(fallback);
-      return fallback;
+    if (kpi_id === 1) {
+      const obj: MetricsCardResponse = {
+        titulo_metrica: "Total de Chamados Vencidos",
+        valor_metrica: res.total_expired_tickets.toString(),
+        top_limit: "-",
+        bottom_limit: "-",
+        relation: false,
+      };
+      return obj;
     }
 
-    toast.add({
-      title: "Erro ao carregar dados KPI 2",
-      description: error?.message ?? "Erro desconhecido.",
-    });
-
-    console.log(fallback);
-    return fallback; // ✅ retorna null em outros erros
+    return res;
+  } catch (error) {
+    console.error("Erro ao buscar métricas:", error);
+    return null;
   }
 }
 
@@ -420,16 +345,20 @@ function onRangeUpdate(payload: { start_date: string; end_daet: string }) {
   fetchCriticalCategories(payload);
   fetchCriticalProjects(payload);
   fetchTicketsByCategory(payload);
+  iterate_metrics_card_();
 }
 
-// Ao iniciar, mostra os últimos 7 dias
-fetchCriticalCategories();
-fetchCriticalProjects();
-fetchTicketsByCategory();
-// Busca a métrica de forma assíncrona e atualiza o ref quando estiver pronta
-fetchMetricsCard(2).then((res) => {
-  if (res) MetricsCard2.value = res;
-});
+const metrics_cards = ref<MetricsCardResponse[]>([]);
+
+async function iterate_metrics_card_() {
+  const requests = [1, 2, 3, 4].map((id) => fetchMetricsCard(id));
+  const results = await Promise.all(requests);
+
+  // ✅ Atualiza o estado reativo — ESSENCIAL
+  metrics_cards.value = results.filter(
+    (r) => r !== null,
+  ) as MetricsCardResponse[];
+}
 
 const _formatLabel = (str: string, maxLength: number): string[] => {
   // Renomeado para _formatLabel
@@ -460,8 +389,10 @@ const _formatLabel = (str: string, maxLength: number): string[] => {
 };
 
 onMounted(() => {
-  fetchTicketsByCategory();
-  fetchCriticalProjects();
+  // Ao iniciar, mostra os últimos 7 dias
   fetchCriticalCategories();
+  fetchCriticalProjects();
+  fetchTicketsByCategory();
+  iterate_metrics_card_();
 });
 </script>
