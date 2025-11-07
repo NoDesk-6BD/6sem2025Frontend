@@ -44,7 +44,7 @@
         :dash-name="dashNameList[2] ?? ''"
         :title-style="chartTitleClass"
       >
-        <ChartCriticalCategories :chart-data="CriticalCategoriesData" />
+        <SatisfactionMeter :chart-data="teste_gauge" />
       </dash-base>
     </div>
   </div>
@@ -56,7 +56,6 @@ import type { ChartData, ChartDataset } from "chart.js";
 import { useToast, useRuntimeConfig } from "#imports";
 import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
-import ChartCriticalCategories from "../components/ChartCriticalCategories.vue";
 import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
 import CustomLegend from "~/components/CustomLegend.vue";
 import MetricsCard from "~/components/MetricsCard.vue";
@@ -83,6 +82,14 @@ const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
   datasets: [],
 });
+
+const teste_gauge = {
+  datasets: [
+    {
+      data: [90, 10],
+    },
+  ],
+};
 
 const CriticalProjectsData = ref<ChartData<"bar", number[], string>>({
   labels: [],
