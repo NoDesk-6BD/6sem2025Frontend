@@ -30,3 +30,10 @@ export interface CriticalProjectsResponse {
   open_status_ids: number[];
   rows: CriticalProjectRow[]; // Onde a lista de projetos reside
 }
+
+export interface GaugeResponse {
+  datasets: {
+    data: number[];
+    label: string;
+  }[];
+}

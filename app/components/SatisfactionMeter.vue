@@ -12,27 +12,31 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Chart, type ChartData, type ChartOptions } from "chart.js";
+import { Chart, type ChartOptions } from "chart.js";
 import chartjsPluginAnnotation from "chartjs-plugin-annotation";
 import DoughnutChart from "./DoughnutChart.vue";
+import type { GaugeResponse } from "~/types/interfaces";
 
 const props = defineProps<{
-  chartData: ChartData<"doughnut", number[], string>;
+  chartData: GaugeResponse;
+  centerLabel?: string; // texto abaixo da porcentagem
 }>();
 
-// Cores e índices
-const COLORS = ["rgb(231, 24, 49)", "rgb(239, 198, 0)", "rgb(140, 214, 16)"];
+const COLORS = ["#e71831", "#efc600", "#8cd618"];
 function index(perc: number) {
   return perc < 70 ? 0 : perc < 90 ? 1 : 2;
 }
 
 // Estado reativo dos dados do gráfico
 const chartDataReactive = ref({
-  labels: props.chartData.labels ?? [],
-  datasets: props.chartData.datasets.map((ds) => ({
-    ...ds,
-    backgroundColor: ["#EAEAEA", "#EAEAEA"],
-  })),
+  labels: [props.chartData.datasets.label], // label único
+  datasets: [
+    {
+      data: props.chartData.datasets.data, // array de números
+      label: props.chartData.datasets.label,
+      backgroundColor: ["#EAEAEA", "#EAEAEA"],
+    },
+  ],
 });
 
 // Watch para atualizar cores dinamicamente
@@ -64,31 +68,53 @@ const chartOptions = ref<ChartOptions<"doughnut">>({
     legend: { display: false },
     title: { display: false },
     datalabels: { display: false },
+    centerText: {
+      label: props.centerLabel ?? "",
+    },
   },
 });
 
 // Plugin local para texto central
 const centerTextPlugin = {
   id: "centerText",
-  afterDraw(chart: Chart) {
-    if (chart.config.type !== "doughnut") return; // só doughnut
+  afterDraw(chart) {
+    if (chart.config.type !== "doughnut") return;
     if (!chart.data.datasets?.length) return;
+
     const dataset = chart.data.datasets[0];
     if (!dataset.data?.length) return;
 
-    const { ctx, chartArea } = chart;
-    if (!chartArea) return;
-    const { width, height } = chartArea;
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta?.data?.[0]) return;
 
+    const { x, y } = meta.data[0];
     const percentage = dataset.data[0] as number;
     const color = COLORS[index(percentage)];
 
+    const options = chart.config.options;
+    const label = options?.plugins?.centerText?.label ?? "";
+
     ctx.save();
-    ctx.font = "bold 36px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+
+    // 🔸 Ajuste dinâmico para gráficos semi-doughnut
+    const isSemi = options.circumference === 180;
+    const offsetY = isSemi ? -chart.height * 0.15 : 0; // número negativo sobe
+
+    // Porcentagem
+    ctx.font = "bold 36px sans-serif";
     ctx.fillStyle = color;
-    ctx.fillText(`${percentage}%`, width / 2, height / 2 + 35);
+    ctx.fillText(`${percentage}%`, x, y + offsetY);
+
+    // Texto abaixo da porcentagem
+    if (label) {
+      ctx.font = "16px sans-serif";
+      ctx.fillStyle = "#555";
+      ctx.fillText(label, x, y + offsetY + 25);
+    }
+
     ctx.restore();
   },
 };

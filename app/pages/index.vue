@@ -44,7 +44,10 @@
         :dash-name="dashNameList[2] ?? ''"
         :title-style="chartTitleClass"
       >
-        <SatisfactionMeter :chart-data="teste_gauge" />
+        <SatisfactionMeter
+          :chart-data="teste_gauge"
+          :center-label="teste_gauge.datasets[0].label"
+        />
       </dash-base>
     </div>
   </div>
@@ -63,6 +66,7 @@ import type {
   MetricsCardResponse,
   CriticalProjectsResponse,
   TicketsByCategory,
+  GaugeResponse,
 } from "~/types/interfaces";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
@@ -83,10 +87,11 @@ const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   datasets: [],
 });
 
-const teste_gauge = {
+const teste_gauge: GaugeResponse = {
   datasets: [
     {
       data: [90, 10],
+      label: "Satisfação",
     },
   ],
 };
