@@ -1,20 +1,19 @@
 //app/components/MetricsCard.vue
 <script setup lang="ts">
 import { computed, toRef } from "vue";
+import type { MetricsCardResponse } from "~/types/interfaces";
 
 const props = defineProps<{
-  tituloMetrica: string;
-  valorMetrica: number | string;
-  relation?: boolean;
-  bottomLimit?: number | string;
-  topLimit?: number | string;
+  payload?: MetricsCardResponse;
 }>();
 
 // toRef mantém reatividade das props
-const relation = toRef(props, "relation");
-const valor = toRef(props, "valorMetrica");
-const top = toRef(props, "topLimit");
-const bottom = toRef(props, "bottomLimit");
+const payload = toRef(props, "payload");
+const relation = payload.value?.relation;
+const valor = payload.value?.valor_metrica;
+const top = payload.value?.top_limit;
+const bottom = payload.value?.bottom_limit;
+const tituloMetrica = payload.value?.titulo_metrica;
 
 // Função auxiliar: tenta converter valores para número
 const toNumber = (val: unknown): number | null => {
@@ -24,9 +23,9 @@ const toNumber = (val: unknown): number | null => {
 
 // computed que retorna a cor (Tailwind)
 const corValor = computed(() => {
-  const val = toNumber(valor.value);
-  const topVal = toNumber(top.value);
-  const bottomVal = toNumber(bottom.value);
+  const val = toNumber(valor);
+  const topVal = toNumber(top);
+  const bottomVal = toNumber(bottom);
 
   // Se não forem numéricos, retorna cor padrão
   if (val === null || topVal === null || bottomVal === null) {
@@ -34,7 +33,7 @@ const corValor = computed(() => {
   }
 
   // Caso a relação seja "positiva" (true) ou "negativa" (false)
-  if (relation.value !== false) {
+  if (relation !== false) {
     if (bottomVal !== undefined && val < bottomVal) return "text-red-500";
     if (topVal !== undefined && val > topVal) return "text-blue-500";
     return "text-gray-900";
@@ -53,38 +52,12 @@ const corValor = computed(() => {
   >
     <div class="flex justify-between items-center">
       <h1 class="text-gray-500 font-medium text-lg">
-        {{ props.tituloMetrica }}
+        {{ tituloMetrica }}
       </h1>
 
       <div :class="corValor" class="text-xl font-bold">
-        {{ props.valorMetrica }}
+        {{ valor }}
       </div>
     </div>
   </UCard>
 </template>
-
-<!-- template #header
-    <template></template>
-      <h1 class="text-gray-500 font-medium text-xl">
-        {{ props.tituloMetrica }}
-      </h1>
-    </template>
-
-    <div class="text-2xl font-bold" :class="corValor">
-      {{ props.valorMetrica }}
-    </div>
-  </UCard>
-</template>
-
-<style scoped>
-/* Reduz o padding dos divs internos do UCard */
-:deep(.p-4) {
-  padding: 0.6rem !important;
-}
-:deep(.sm\:px-6) {
-  padding-left: 0.8rem !important;
-}
-:deep(.sm\:p-6) {
-  padding-left: 0.8rem !important;
-}
-</style> -->
