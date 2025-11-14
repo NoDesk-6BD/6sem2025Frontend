@@ -30,13 +30,16 @@
       </div>
     </div>
 
+    <!-- NAVEGAÇÃO ATUALIZADA -->
     <nav class="flex-1 px-2">
       <ul>
+        <!-- Link para o Dashboard Principal -->
         <li>
-          <a
-            href="#"
+          <NuxtLink
+            to="/"
             class="flex items-center gap-3 p-3 hover:bg-neutral-700 text-white rounded transition"
             :class="[collapsed ? 'justify-center' : '']"
+            active-class="bg-neutral-700"
           >
             <span>
               <LayoutDashboard :size="28" class="text-white" />
@@ -44,7 +47,24 @@
             <span v-if="!collapsed" class="font-medium whitespace-nowrap"
               >Dashboards</span
             >
-          </a>
+          </NuxtLink>
+        </li>
+
+        <!-- NOVO LINK PARA CLIENTES -->
+        <li class="mt-2">
+          <NuxtLink
+            to="/customers"
+            class="flex items-center gap-3 p-3 hover:bg-neutral-700 text-white rounded transition"
+            :class="[collapsed ? 'justify-center' : '']"
+            active-class="bg-neutral-700"
+          >
+            <span>
+              <Users :size="28" class="text-white" />
+            </span>
+            <span v-if="!collapsed" class="font-medium whitespace-nowrap"
+              >Clientes</span
+            >
+          </NuxtLink>
         </li>
       </ul>
     </nav>
@@ -72,6 +92,7 @@ import {
   LayoutDashboard,
   LogOut,
   ChevronFirst,
+  Users,
 } from "lucide-vue-next";
 
 import { useState } from "#imports";

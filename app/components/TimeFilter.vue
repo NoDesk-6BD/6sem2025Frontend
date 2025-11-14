@@ -1,6 +1,8 @@
 // app/components/TimeFilter.vue
 <template>
-  <div class="flex items-center justify-end">
+  <div
+    class="flex flex-col items-end sm:flex-row sm:items-center justify-end gap-2"
+  >
     <label class="mr-2">Período selecionado:</label>
     <UPopover popper="{ placement: 'bottom-end' }" @show="focusHiddenButton">
       <UButton
@@ -17,12 +19,10 @@
         <button ref="hiddenBtn" class="sr-only" tabindex="0">
           Foco oculto
         </button>
-        <div
-          class="flex flex-row gap-2 px-2 py-3 min-w-[10vw] max-w-[200px] items-center"
-        >
+        <div class="flex flex-col md:flex-row gap-2 px-2 py-3 items-center">
           <!-- Botões rápidos centralizados na esquerda -->
           <div
-            class="flex flex-col gap-1 px-3 justify-center items-center h-80 bg-white border-r border-[#E5E7EB]"
+            class="flex flex-col gap-1 px-3 justify-center items-center h-auto md:h-80 bg-white border-b md:border-b-0 md:border-r border-[#E5E7EB]"
           >
             <UButton
               v-for="option in quickOptions"

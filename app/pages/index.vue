@@ -2,7 +2,9 @@
 <template>
   <div class="flex flex-col p-2 main-content">
     <div>
-      <div class="flex items-center justify-between mb-4">
+      <div
+        class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2"
+      >
         <h1 class="text-2xl font-bold">KPI Cards</h1>
         <TimeFilter @update-range="onRangeUpdate" />
       </div>
@@ -171,9 +173,15 @@ async function fetchMetricsCard(
     const res = await $fetch<MetricsCardResponse>(rota, { method: "GET" });
 
     if (kpi_id === 1) {
+      // 1. Garante que o valor é um número
+      const rawValue = Number(res.total_expired_tickets);
+      // 2. Formata o número para o padrão brasileiro (pt-BR), que usa '.' como separador de milhares
+      const formattedValue = new Intl.NumberFormat("pt-BR").format(rawValue);
+
       const obj: MetricsCardResponse = {
         titulo_metrica: "Total de Chamados Vencidos",
-        valor_metrica: res.total_expired_tickets.toString(),
+        valor_metrica: formattedValue,
+        //        valor_metrica: res.total_expired_tickets.toString(),
         top_limit: "-",
         bottom_limit: "-",
         relation: false,
