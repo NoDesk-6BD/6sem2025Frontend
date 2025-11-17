@@ -403,32 +403,39 @@ onMounted(() => {
 
 const columns = [
   {
+    id: "id",
     key: "id",
     label: "#",
   },
   {
+    id: "full_name",
     key: "full_name",
     label: "Nome",
     sortable: true,
   },
   {
+    id: "email",
     key: "email",
     label: "Email",
   },
   // Coluna atualizada para exibir o nome da Regra de Acesso
   {
+    id: "role_id",
     key: "role_id",
     label: "Regra de Acesso",
   },
   {
+    id: "vip",
     key: "vip",
     label: "VIP",
   },
   {
+    id: "is_active",
     key: "is_active", // Coluna alterada
     label: "Status",
   },
   {
+    id: "actions",
     key: "actions",
     label: "Ações",
   },
