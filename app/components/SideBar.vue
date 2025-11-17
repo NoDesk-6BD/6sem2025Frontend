@@ -18,7 +18,8 @@
             v-if="!collapsed"
             class="text-white font-semibold whitespace-nowrap"
           >
-            Usuário
+            <!-- SIMULAÇÃO DO NOME/PERFIL -->
+            {{ currentUserRole === "admin" ? "Administrador" : "Usuário" }}
           </div>
         </div>
         <button
@@ -50,7 +51,7 @@
           </NuxtLink>
         </li>
 
-        <!-- NOVO LINK PARA CLIENTES -->
+        <!-- Link para Clientes -->
         <li class="mt-2">
           <NuxtLink
             to="/customers"
@@ -63,6 +64,24 @@
             </span>
             <span v-if="!collapsed" class="font-medium whitespace-nowrap"
               >Clientes</span
+            >
+          </NuxtLink>
+        </li>
+
+        <!-- NOVO LINK PARA CADASTRO DE USUÁRIOS (VALIDADO) -->
+        <!-- O link só aparece se o usuário NÃO for 'viewer' -->
+        <li v-if="canManageUsers" class="mt-2">
+          <NuxtLink
+            to="/users"
+            class="flex items-center gap-3 p-3 hover:bg-neutral-700 text-white rounded transition"
+            :class="[collapsed ? 'justify-center' : '']"
+            active-class="bg-neutral-700"
+          >
+            <span>
+              <UserCheck :size="28" class="text-white" />
+            </span>
+            <span v-if="!collapsed" class="font-medium whitespace-nowrap"
+              >Usuários</span
             >
           </NuxtLink>
         </li>
@@ -87,12 +106,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from "vue"; // Adicione 'computed' e 'ref'
 import {
   UserCircle2,
   LayoutDashboard,
   LogOut,
   ChevronFirst,
   Users,
+  UserCheck, // Novo ícone para Gerenciamento de Usuários
 } from "lucide-vue-next";
 
 import { useState } from "#imports";
@@ -102,4 +123,20 @@ const collapsed = useState("sidebar-collapsed");
 function handleLogout() {
   console.log("Logout clicado");
 }
+
+// --------------------------------------------------------
+// LÓGICA DE SIMULAÇÃO DE PERMISSÃO
+// --------------------------------------------------------
+
+// 1. Simula o perfil do usuário logado (Mude o valor para testar)
+// 'admin' ou 'agent' pode ver. 'viewer' não pode.
+const currentUserRole = ref("admin"); // SIMULAÇÃO: Altere para 'agent' ou 'viewer' para testar.
+
+// 2. Computed que verifica a permissão
+const canManageUsers = computed(() => {
+  return currentUserRole.value !== "viewer";
+});
+
+// 3. Adiciona o novo ícone (UserCheck)
+// Ele já foi adicionado na lista de imports acima.
 </script>

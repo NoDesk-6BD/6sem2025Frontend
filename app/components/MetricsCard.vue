@@ -17,7 +17,13 @@ const tituloMetrica = payload.value?.titulo_metrica;
 
 // Função auxiliar: tenta converter valores para número
 const toNumber = (val: unknown): number | null => {
-  const num = Number(val);
+  if (val === null || val === undefined) return null;
+
+  // 1. Converte para string e REMOVE os pontos de milhar
+  const cleanVal = String(val).replace(/\./g, "");
+
+  // 2. Converte a string limpa para número
+  const num = Number(cleanVal);
   return isNaN(num) ? null : num;
 };
 

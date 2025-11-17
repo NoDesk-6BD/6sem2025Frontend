@@ -12,7 +12,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Chart, type ChartOptions } from "chart.js";
+import { Chart } from "chart.js";
+import type { ChartOptions } from "chart.js";
 import chartjsPluginAnnotation from "chartjs-plugin-annotation";
 import DoughnutChart from "./DoughnutChart.vue";
 import type { GaugeResponse } from "~/types/interfaces";

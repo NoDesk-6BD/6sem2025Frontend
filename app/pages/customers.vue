@@ -3,14 +3,16 @@
   <!-- Container principal da página, mantendo o padrão -->
   <div class="flex flex-col p-6 main-content">
     <!-- Cabeçalho: Título e Filtro de Cliente -->
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-700">Visão do Cliente</h1>
+    <div
+      class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2"
+    >
+      <h1 class="text-2xl font-bold">Visão do Cliente</h1>
 
       <!-- Filtro de Caixa de Seleção para Clientes -->
-      <div class="flex items-center gap-2">
-        <label for="customer-select" class="text-sm font-medium text-gray-600"
-          >Cliente:</label
-        >
+      <div
+        class="flex flex-col items-end sm:flex-row sm:items-center justify-end gap-2"
+      >
+        <label for="customer-select" class="mr-2">Cliente:</label>
         <USelectMenu
           id="customer-select"
           v-model="selectedCustomer"

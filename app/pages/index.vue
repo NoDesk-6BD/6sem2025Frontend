@@ -182,8 +182,8 @@ async function fetchMetricsCard(
         titulo_metrica: "Total de Chamados Vencidos",
         valor_metrica: formattedValue,
         //        valor_metrica: res.total_expired_tickets.toString(),
-        top_limit: "-",
-        bottom_limit: "-",
+        top_limit: "9999999",
+        bottom_limit: "101",
         relation: false,
       };
       return obj;
