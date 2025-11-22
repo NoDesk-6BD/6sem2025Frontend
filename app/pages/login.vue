@@ -1,4 +1,4 @@
-// app/pages/login.vue
 <template>
+  <!-- app/pages/login.vue -->
   <div>Login</div>
 </template>

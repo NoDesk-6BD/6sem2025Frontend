@@ -1,6 +1,5 @@
-// app/components/CustomLegend.vue
-
 <template>
+  <!-- app/components/CustomLegend.vue -->
   <div
     v-if="labels.length"
     class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 mt-4 px-4"

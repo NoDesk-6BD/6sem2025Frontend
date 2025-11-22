@@ -1,5 +1,5 @@
-// app/pages/customers.vue
 <template>
+  <!-- app/pages/customers.vue -->
   <!-- Container principal da página, mantendo o padrão -->
   <div class="flex flex-col p-6 main-content">
     <!-- Cabeçalho: Título e Filtro de Cliente -->

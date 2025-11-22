@@ -1,5 +1,5 @@
-// app/components/ChartCriticalProjects.vue
 <template>
+  <!-- app/components/ChartCriticalProjects.vue -->
   <div>
     <client-only>
       <BarChart :data="props.chartData" :options="chartOptions" />

@@ -1,5 +1,5 @@
-// app/components/ChartCriticalCategories.vue
 <template>
+  <!-- app/components/ChartCriticalCategories.vue -->
   <div>
     <client-only>
       <DoughnutChart :data="props.chartData" :options="chartOptions" />

@@ -1,5 +1,5 @@
-// app/pages/index.vue
 <template>
+  <!-- app/pages/index.vue -->
   <div class="flex flex-col p-6 main-content">
     <div>
       <div

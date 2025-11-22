@@ -1,5 +1,5 @@
-// app/components/TimeFilter.vue
 <template>
+  <!-- app/components/TimeFilter.vue -->
   <div
     class="flex flex-col items-end sm:flex-row sm:items-center justify-end gap-2"
   >
