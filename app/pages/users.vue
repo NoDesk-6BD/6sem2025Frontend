@@ -1,631 +1,468 @@
-// app/pages/users.vue
-
 <template>
-  <!--
-    Container principal da página
-    Usando o mesmo padding e layout do index.vue e customers.vue
-  -->
   <div class="flex flex-col p-6 main-content">
-    <!-- Cabeçalho: Título e Botão de Ação -->
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2"
     >
-      <h1 class="text-2xl font-bold">Gerenciamento de Usuários</h1>
-      <UButton icon="i-heroicons-plus" size="md" @click="openSlideover(null)">
-        Cadastrar Usuário
-      </UButton>
+      <h1 class="text-2xl font-bold">Usuários do sistema</h1>
     </div>
 
-    <!-- Barra de Ferramentas da Tabela: Filtro -->
-    <div class="flex items-center justify-between mb-4">
-      <UInput
-        v-model="search"
-        icon="i-heroicons-magnifying-glass-20-solid"
-        placeholder="Buscar por nome..."
-        class="w-full sm:w-80"
-      />
-    </div>
-
-    <!-- Tabela para Listar os Usuários (READ) -->
-    <UCard :ui="{ body: { padding: 'p-0' } }">
-      <UTable
-        :rows="filteredUsers"
-        :columns="columns"
-        :loading="loadingTable || loadingRoles"
-      >
-        <!-- Coluna de Ações Customizada -->
-        <template #actions-data="{ row }">
-          <UDropdown :items="getItemsActions(row)">
-            <UButton
-              color="gray"
-              variant="ghost"
-              icon="i-heroicons-ellipsis-horizontal-20-solid"
+    <!-- <UCard class="max-w-3xl mx-auto w-full"> Removido -->
+    <UCard class="w-full">
+      <form class="space-y-6" @submit.prevent="onSubmit">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- NOME -->
+          <UFormField name="full_name" required :error="errors.full_name">
+            <template #label>
+              <div
+                class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
+              >
+                <UIcon name="i-lucide-user" class="w-4 h-4" />
+                <span>Nome Completo:</span>
+              </div>
+            </template>
+            <UInput
+              :model-value="form.full_name"
+              placeholder="DIGITE O NOME COMPLETO"
+              class="w-full"
+              @update:model-value="handleNameInput"
+              @input="errors.full_name = undefined"
             />
-          </UDropdown>
-        </template>
-        <!-- Coluna VIP Customizada -->
-        <template #vip-data="{ row }">
-          <UBadge
-            :label="row.vip ? 'VIP' : 'Normal'"
-            :color="row.vip ? 'amber' : 'gray'"
-            variant="subtle"
-          />
-        </template>
-        <!-- Coluna Regra de Acesso Customizada -->
-        <template #role_id-data="{ row }">
-          <UBadge
-            :label="getRoleName(row.role_id)"
-            :color="getRoleColor(row.role_id)"
-            variant="subtle"
-          />
-        </template>
-        <!-- Coluna Status Customizada -->
-        <template #is_active-data="{ row }">
-          <UBadge :color="row.is_active ? 'green' : 'red'" variant="soft">
-            {{ row.is_active ? "Ativo" : "Inativo" }}
-          </UBadge>
-        </template>
-      </UTable>
+          </UFormField>
 
-      <!-- Paginação (Simulação - A paginação real viria do backend) -->
-      <template #footer>
-        <div class="flex justify-end p-4">
-          <UPagination
-            v-model="page"
-            :page-count="pageCount"
-            :total="totalUsers"
-          />
-        </div>
-      </template>
-    </UCard>
-
-    <!-- Modal de Confirmação de Exclusão (Soft Delete) -->
-    <UModal v-model="isConfirmModalOpen">
-      <UCard>
-        <div class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold">Confirmar Desativação</h2>
-          <p>
-            Tem certeza de que deseja desativar o usuário
-            <strong>{{ userToDelete?.full_name }}</strong
-            >? Esta ação removerá a chave de acesso e o tornará **inativo**.
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton
-              color="gray"
-              variant="ghost"
-              @click="isConfirmModalOpen = false"
-            >
-              Cancelar
-            </UButton>
-            <UButton
-              color="red"
-              :loading="loadingDelete"
-              @click="confirmDelete"
-            >
-              Desativar Usuário
-            </UButton>
-          </div>
-        </div>
-      </UCard>
-    </UModal>
-
-    <!-- Slideover para Cadastro/Edição (CREATE/UPDATE) -->
-    <USlideover v-model="isSlideoverOpen">
-      <UCard
-        class="flex flex-col flex-1"
-        :ui="{
-          body: { base: 'flex-1' },
-          ring: '',
-          divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-        }"
-      >
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3
-              class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-            >
-              {{ isEditing ? "Editar Usuário" : "Cadastrar Usuário" }}
-            </h3>
-            <UButton
-              color="gray"
-              variant="ghost"
-              icon="i-heroicons-x-mark-20-solid"
-              class="-my-1"
-              @click="isSlideoverOpen = false"
+          <!-- EMAIL -->
+          <UFormField name="email" required :error="errors.email">
+            <template #label>
+              <div
+                class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
+              >
+                <UIcon name="i-lucide-mail" class="w-4 h-4" />
+                <span>E-mail:</span>
+              </div>
+            </template>
+            <UInput
+              :model-value="form.email"
+              type="email"
+              placeholder="user@example.com"
+              class="w-full"
+              @update:model-value="handleEmailInput"
+              @input="errors.email = undefined"
             />
-          </div>
-        </template>
+          </UFormField>
 
-        <!-- Formulário de Usuário -->
-        <UForm
-          :schema="UserSchema"
-          :state="state"
-          class="p-4 space-y-4"
-          @submit="onSubmit"
-        >
-          <!-- Campos do Formulário -->
-          <UFormGroup label="Nome Completo" name="full_name">
-            <UInput v-model="state.full_name" />
-          </UFormGroup>
+          <!-- CPF -->
+          <UFormField name="cpf" required :error="errors.cpf">
+            <template #label>
+              <div
+                class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
+              >
+                <UIcon name="i-lucide-file-badge" class="w-4 h-4" />
+                <span>CPF:</span>
+              </div>
+            </template>
+            <UInput
+              :model-value="form.cpf"
+              placeholder="000.000.000-00"
+              maxlength="14"
+              class="w-full"
+              @update:model-value="handleCpfInput"
+              @input="errors.cpf = undefined"
+            />
+          </UFormField>
 
-          <UFormGroup label="Email" name="email">
-            <UInput v-model="state.email" type="email" />
-          </UFormGroup>
+          <!-- TELEFONE -->
+          <UFormField name="phone" required :error="errors.phone">
+            <template #label>
+              <div
+                class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
+              >
+                <UIcon name="i-lucide-phone" class="w-4 h-4" />
+                <span>Telefone:</span>
+              </div>
+            </template>
+            <UInput
+              :model-value="form.phone"
+              placeholder="(00) 00000-0000"
+              maxlength="15"
+              class="w-full"
+              @update:model-value="handlePhoneInput"
+              @input="errors.phone = undefined"
+            />
+          </UFormField>
 
-          <!-- CAMPO: Regra de Acesso -->
-          <UFormGroup label="Regra de Acesso" name="role_id">
-            <USelectMenu
-              v-model="state.role_id"
-              :options="roleOptions"
-              :loading="loadingRoles"
-              placeholder="Selecione a regra"
-              value-attribute="value"
+          <!-- PERFIL DE ACESSO -->
+          <UFormField name="role" required :error="errors.role">
+            <template #label>
+              <div
+                class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
+              >
+                <UIcon name="i-lucide-shield" class="w-4 h-4" />
+                <span>Perfil de Acesso:</span>
+              </div>
+            </template>
+            <USelect
+              v-model="form.role"
+              :items="roles"
               option-attribute="label"
-              searchable
+              value-attribute="value"
+              placeholder="Selecione o perfil"
+              class="w-full"
+              @change="errors.role = undefined"
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Telefone" name="phone">
+          <!-- VIP -->
+          <div class="flex items-center pt-8">
+            <UCheckbox
+              v-model="form.vip"
+              name="vip"
+              label="Usuário VIP"
+              help="Habilita acesso prioritário"
+            />
+          </div>
+
+          <!-- SENHA -->
+          <UFormField name="password" required :error="errors.password">
+            <template #label>
+              <div
+                class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
+              >
+                <UIcon name="i-lucide-lock" class="w-4 h-4" />
+                <span>Senha:</span>
+              </div>
+            </template>
             <UInput
-              v-model="state.phone"
-              v-maska
-              data-maska="(##) #####-####"
-              placeholder="(99) 99999-9999"
+              v-model="form.password"
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              class="w-full"
+              @input="errors.password = undefined"
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="CPF" name="cpf">
+          <!-- CONFIRMAR SENHA -->
+          <UFormField
+            name="password_confirm"
+            required
+            :error="errors.password_confirm"
+          >
+            <template #label>
+              <div
+                class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
+              >
+                <UIcon name="i-lucide-lock-keyhole" class="w-4 h-4" />
+                <span>Confirmar Senha:</span>
+              </div>
+            </template>
             <UInput
-              v-model="state.cpf"
-              v-maska
-              data-maska="###.###.###-##"
-              placeholder="999.999.999-99"
+              v-model="form.password_confirm"
+              type="password"
+              placeholder="Repita a senha"
+              class="w-full"
+              @input="errors.password_confirm = undefined"
             />
-          </UFormGroup>
+          </UFormField>
+        </div>
 
-          <UFormGroup label="VIP" name="vip">
-            <UToggle v-model="state.vip" on-icon="i-heroicons-check-20-solid" />
-          </UFormGroup>
-
-          <h4 class="text-lg font-semibold pt-4 border-t">
-            {{ isEditing ? "Alterar Senha" : "Senha de Acesso" }}
-          </h4>
-          <p v-if="isEditing" class="text-sm text-gray-500">
-            Deixe os campos em branco para manter a senha atual.
-          </p>
-
-          <UFormGroup label="Senha" name="password">
-            <UInput v-model="state.password" type="password" />
-          </UFormGroup>
-
-          <UFormGroup label="Confirme a Senha" name="passwordConfirm">
-            <UInput v-model="state.passwordConfirm" type="password" />
-          </UFormGroup>
+        <!-- BOTÕES-->
+        <div
+          class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700"
+        >
+          <UButton
+            type="button"
+            label="Cancelar"
+            variant="ghost"
+            color="gray"
+            class="bg-gray-200 text-gray-700 hover:bg-red-100 hover:text-red-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors duration-200"
+            @click="resetForm"
+          />
 
           <UButton
             type="submit"
-            block
-            :loading="loadingSubmit"
-            :disabled="loadingRoles"
-          >
-            {{ isEditing ? "Atualizar Usuário" : "Cadastrar Usuário" }}
-          </UButton>
-        </UForm>
-
-        <template #footer>
-          <!-- Nada no rodapé por enquanto -->
-        </template>
-      </UCard>
-    </USlideover>
+            label="Salvar Usuário"
+            color="primary"
+            :loading="isLoading"
+            icon="i-lucide-save"
+          />
+        </div>
+      </form>
+    </UCard>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
-import { z } from "zod";
-import type { FormSubmitEvent } from "#ui/types";
-import { vMaska } from "maska";
+import { ref, reactive } from "vue";
+import { useRuntimeConfig, useToast } from "#imports"; // 'navigateTo' removido pois não era usado
 
-// Configurações e Toasts
 const config = useRuntimeConfig();
 const toast = useToast();
+const isLoading = ref(false);
 
-// =========================================================
-// 1. TIPAGENS E ESQUEMA ZOD
-// =========================================================
+// Opções de Roles (Perfis)
+const roles = ref([
+  { label: "Administrador", value: "admin" },
+  { label: "Agente", value: "agent" },
+  { label: "Visualizador", value: "viewer" },
+]);
 
-/** Interface para o objeto Role retornado pelo novo endpoint */
-interface Role {
-  id: number;
-  name: string;
-}
-
-/** Interface simplificada para o objeto de Usuário na tabela/edição
- * NOTE: Usando is_active (conforme JSON real) em vez de active.
- */
-interface UserResponse {
-  id: number;
-  email: string;
-  full_name: string;
-  phone: string;
-  cpf: string;
-  vip: boolean;
-  role_id: number; // Novo campo
-  is_active: boolean; // Novo campo (nome vindo do backend)
-  // Campos de data podem ser opcionais para o frontend
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Esquema Zod para validação do formulário
-const passwordSchema = z.string().optional();
-
-const UserSchema = z
-  .object({
-    email: z.string().email("Formato de email inválido"),
-    password: passwordSchema,
-    passwordConfirm: passwordSchema,
-    full_name: z.string().min(1, "Nome completo é obrigatório"),
-    phone: z.string().min(1, "Telefone é obrigatório"),
-    cpf: z.string().min(1, "CPF é obrigatório"),
-    vip: z.boolean(),
-    // Validação do role_id (Deve ser um número e maior ou igual a 1)
-    role_id: z
-      .number({ invalid_type_error: "A regra de acesso é obrigatória" })
-      .min(1, "A regra de acesso é obrigatória"),
-  })
-  .superRefine(({ password, passwordConfirm }, ctx) => {
-    // Regra para senhas: devem ser iguais se forem preenchidas
-    if (password && passwordConfirm && password !== passwordConfirm) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "As senhas não coincidem",
-        path: ["passwordConfirm"],
-      });
-    }
-    // Regra para cadastro: senha é obrigatória se não for edição
-    if (!isEditing.value && !password) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "A senha é obrigatória no cadastro",
-        path: ["password"],
-      });
-    }
-  });
-
-type UserSchema = z.output<typeof UserSchema>;
-
-// =========================================================
-// 2. ESTADO DO COMPONENTE
-// =========================================================
-
-// Tabela (Read)
-const users = ref<UserResponse[]>([]);
-const search = ref(""); // Estado para o campo de busca
-const loadingTable = ref(false);
-const page = ref(1);
-const pageCount = 10;
-const totalUsers = ref(0);
-
-// Slideover (Create/Update)
-const isSlideoverOpen = ref(false);
-const isEditing = ref(false);
-const selectedUserId = ref<number | null>(null);
-const loadingSubmit = ref(false);
-const loadingUser = ref(false);
-
-// Modal de Exclusão (Delete)
-const isConfirmModalOpen = ref(false);
-const userToDelete = ref<UserResponse | null>(null);
-const loadingDelete = ref(false);
-
-// Estado das Roles
-const roles = ref<Role[]>([]);
-const loadingRoles = ref(false);
-
-// Estado do Formulário
-const initialState = {
+// Estado do formulário
+const form = reactive({
   email: "",
   password: "",
-  passwordConfirm: "",
+  password_confirm: "",
   full_name: "",
   phone: "",
   cpf: "",
   vip: false,
-  role_id: null as number | null, // NOVO CAMPO
-};
-
-const state = reactive(Object.assign({}, initialState));
-
-// =========================================================
-// 3. LÓGICA DE DADOS (Fetch e Mapeamento)
-// =========================================================
-
-// Mapeamento de Roles para o USelectMenu
-const roleOptions = computed(() =>
-  roles.value.map((role) => ({
-    label: role.name.charAt(0).toUpperCase() + role.name.slice(1), // Capitaliza o nome
-    value: role.id,
-  })),
-);
-
-// Busca a lista de Regras de Acesso (Roles) - AGORA REAL
-async function fetchRoles() {
-  loadingRoles.value = true;
-  try {
-    const apiEndpoint = `${config.public.apiBase}/users/roles`;
-    const response = await $fetch<Role[]>(apiEndpoint);
-    roles.value = response;
-  } catch (error) {
-    console.error("Erro ao buscar as regras de acesso:", error);
-    toast.add({
-      title: "Erro",
-      description: "Não foi possível carregar as regras de acesso.",
-      color: "red",
-    });
-  } finally {
-    loadingRoles.value = false;
-  }
-}
-
-// Busca a lista de usuários para a tabela - AGORA REAL
-async function fetchUsers() {
-  loadingTable.value = true;
-  try {
-    const apiEndpoint = `${config.public.apiBase}/users/`;
-    // Chamada real ao backend
-    const data = await $fetch<UserResponse[]>(apiEndpoint);
-
-    // Filtra e ordena a lista de usuários
-    users.value = data.sort((a, b) => a.full_name.localeCompare(b.full_name));
-    totalUsers.value = data.length;
-  } catch (error) {
-    console.error("Erro ao buscar usuários:", error);
-    toast.add({
-      title: "Erro",
-      description: "Não foi possível carregar a lista de usuários.",
-      color: "red",
-    });
-  } finally {
-    loadingTable.value = false;
-  }
-}
-
-// Chamadas de inicialização
-onMounted(() => {
-  fetchRoles();
-  fetchUsers();
+  role: undefined as string | undefined,
 });
 
-// =========================================================
-// 4. TABELA E AÇÕES
-// =========================================================
+// Estado dos erros (undefined = sem erro)
+const errors = reactive({
+  email: undefined as string | undefined,
+  password: undefined as string | undefined,
+  password_confirm: undefined as string | undefined,
+  full_name: undefined as string | undefined,
+  phone: undefined as string | undefined,
+  cpf: undefined as string | undefined,
+  role: undefined as string | undefined,
+});
 
-const columns = [
-  {
-    id: "id",
-    key: "id",
-    label: "#",
-  },
-  {
-    id: "full_name",
-    key: "full_name",
-    label: "Nome",
-    sortable: true,
-  },
-  {
-    id: "email",
-    key: "email",
-    label: "Email",
-  },
-  // Coluna atualizada para exibir o nome da Regra de Acesso
-  {
-    id: "role_id",
-    key: "role_id",
-    label: "Regra de Acesso",
-  },
-  {
-    id: "vip",
-    key: "vip",
-    label: "VIP",
-  },
-  {
-    id: "is_active",
-    key: "is_active", // Coluna alterada
-    label: "Status",
-  },
-  {
-    id: "actions",
-    key: "actions",
-    label: "Ações",
-  },
-];
+// --- FUNÇÃO DE LIMPEZA ---
+function resetForm() {
+  // 1. Limpa os valores
+  form.email = "";
+  form.password = "";
+  form.password_confirm = "";
+  form.full_name = "";
+  form.phone = "";
+  form.cpf = "";
+  form.vip = false;
+  form.role = undefined;
 
-// Lógica para obter o nome da regra de acesso pelo ID
-const getRoleName = (roleId: number): string => {
-  return roles.value.find((r) => r.id === roleId)?.name || "Desconhecida";
-};
-
-// Lógica para cor do Badge
-const getRoleColor = (roleId: number): string => {
-  if (roleId === 1) return "red"; // admin
-  if (roleId === 2) return "blue"; // agent
-  if (roleId === 3) return "green"; // viewer
-  return "gray";
-};
-
-// Lista de usuários filtrada e ordenada (para a tabela)
-const filteredUsers = computed(() => {
-  if (!search.value) {
-    // Já está ordenado em fetchUsers
-    return users.value;
-  }
-  // Se houver busca, filtra e mantém a ordenação
-  return users.value.filter((user) => {
-    // Busca case-insensitive
-    return user.full_name.toLowerCase().includes(search.value.toLowerCase());
+  // 2. Limpa os erros visuais
+  Object.keys(errors).forEach((key) => {
+    errors[key as keyof typeof errors] = undefined;
   });
-});
-
-// Ações do Dropdown
-const getItemsActions = (row: UserResponse) => [
-  [
-    {
-      label: "Editar",
-      icon: "i-heroicons-pencil-square-20-solid",
-      click: () => openSlideover(row.id),
-    },
-    {
-      label: "Desativar (Delete)",
-      icon: "i-heroicons-trash-20-solid",
-      click: () => openConfirmModal(row),
-    },
-  ],
-];
-
-// Abre o modal de confirmação de exclusão
-function openConfirmModal(user: UserResponse) {
-  userToDelete.value = user;
-  isConfirmModalOpen.value = true;
 }
 
-// Confirma a exclusão (DELETE)
-async function confirmDelete() {
-  if (!userToDelete.value) return;
+// --- HANDLERS DE INPUT ---
+function handleNameInput(value: string) {
+  form.full_name = (value || "").toUpperCase();
+  if (form.full_name) errors.full_name = undefined;
+}
 
-  loadingDelete.value = true;
-  try {
-    const apiEndpoint = `${config.public.apiBase}/users/${userToDelete.value.id}/`;
-    await $fetch(apiEndpoint, {
-      method: "DELETE",
-    });
+function handleEmailInput(value: string) {
+  form.email = (value || "").toLowerCase();
+  if (form.email) errors.email = undefined;
+}
 
+function handleCpfInput(value: string) {
+  if (!value) {
+    form.cpf = "";
+    return;
+  }
+  let v = value.replace(/\D/g, "");
+  if (v.length > 11) v = v.slice(0, 11);
+
+  if (v.length > 0) {
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+  form.cpf = v;
+  errors.cpf = undefined; // Limpa erro ao digitar
+}
+
+function handlePhoneInput(value: string) {
+  if (!value) {
+    form.phone = "";
+    return;
+  }
+  let v = value.replace(/\D/g, "");
+  if (v.length > 11) v = v.slice(0, 11);
+
+  if (v.length > 0) {
+    v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+    v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+  }
+  form.phone = v;
+  errors.phone = undefined; // Limpa erro ao digitar
+}
+
+/* --- FUNÇÃO AUXILIAR DE VALIDAÇÃO DE CPF ---
+function isValidCPF(cpf: string): boolean {
+  if (typeof cpf !== 'string') return false
+
+  // Remove caracteres não numéricos
+  cpf = cpf.replace(/[^\d]+/g, '')
+
+  // Verifica se tem 11 dígitos ou se são todos iguais (ex: 111.111.111-11 é inválido mas passa no cálculo)
+  if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false
+
+  // Validação do 1º Dígito Verificador
+  const cpfArray = cpf.split('').map(el => +el)
+  let rest = cpfArray.slice(0, 9).reduce((soma, el, index) => soma + el * (10 - index), 0)
+  rest = (rest * 10) % 11
+  if (rest === 10 || rest === 11) rest = 0
+  if (rest !== cpfArray[9]) return false
+
+  // Validação do 2º Dígito Verificador
+  rest = cpfArray.slice(0, 10).reduce((soma, el, index) => soma + el * (11 - index), 0)
+  rest = (rest * 10) % 11
+  if (rest === 10 || rest === 11) rest = 0
+  if (rest !== cpfArray[10]) return false
+
+  return true
+} */
+
+// --- VALIDAÇÃO ---
+function validateForm() {
+  let isValid = true;
+  Object.keys(errors).forEach(
+    (key) => (errors[key as keyof typeof errors] = undefined),
+  );
+
+  // 1. Nome
+  if (!form.full_name || form.full_name.length < 3) {
+    errors.full_name = "O nome deve ter no mínimo 3 caracteres.";
+    isValid = false;
+  }
+
+  // 2. Email (Regra pedida)
+  if (!form.email || !form.email.includes("@") || !form.email.includes(".")) {
+    errors.email = "Informe um e-mail válido, exemplo: usuário@dominio.com";
+    isValid = false;
+  }
+
+  /* // 3. CPF (Agora com validação matemática)
+  const cpfClean = form.cpf.replace(/\D/g, '')
+  if (!cpfClean || cpfClean.length !== 11) {
+    errors.cpf = 'Informe somente números (11 dígitos necessários)'
+    isValid = false
+  } else if (!isValidCPF(cpfClean)) {
+    // Nova validação aqui!
+    errors.cpf = 'CPF inválido (Verifique os dígitos)'
+    isValid = false
+  } */
+
+  // 3. CPF
+  const cpfClean = form.cpf.replace(/\D/g, "");
+  if (!cpfClean || cpfClean.length !== 11) {
+    // Texto solicitado + aviso de tamanho
+    errors.cpf = "Informe somente números (11 dígitos necessários)";
+    isValid = false;
+  }
+
+  // 4. Telefone
+  const phoneClean = form.phone.replace(/\D/g, "");
+  if (!phoneClean || phoneClean.length < 10) {
+    errors.phone = "Informe somente números (com DDD)";
+    isValid = false;
+  }
+
+  // 5. Senha, Tamanho e Confirmação Senha.
+  if (!form.password || form.password.length < 8) {
+    errors.password = "Digite no mínimo 8 caracteres";
+    isValid = false;
+  }
+
+  if (form.password !== form.password_confirm) {
+    errors.password_confirm = "As senhas não conferem";
+    isValid = false;
+  }
+
+  // 7. Role ID
+  if (!form.role) {
+    errors.role = "Selecione um perfil de acesso";
+    isValid = false;
+  }
+
+  return isValid;
+}
+
+// --- SUBMIT ---
+
+async function onSubmit() {
+  // Executa validação antes de qualquer coisa
+  if (!validateForm()) {
+    // Opcional: Toast genérico avisando para corrigir os campos vermelhos
     toast.add({
-      title: `Usuário ${userToDelete.value.full_name} desativado com sucesso!`,
-      description: "O usuário foi marcado como inativo (soft-delete).",
-      color: "green",
-    });
-
-    // Fecha o modal e atualiza a tabela
-    isConfirmModalOpen.value = false;
-    userToDelete.value = null;
-    fetchUsers(); // Recarrega a tabela
-  } catch (unknownError) {
-    console.error("Erro ao deletar usuário:", unknownError);
-    const errorData = (unknownError as { data?: { detail?: string } })?.data;
-    toast.add({
-      title: "Erro",
-      description: errorData?.detail || "Não foi possível desativar o usuário.",
+      title: "Atenção",
+      description: "Verifique os campos em vermelho.",
       color: "red",
+      icon: "i-lucide-alert-circle",
     });
-  } finally {
-    loadingDelete.value = false;
+    return;
   }
-}
 
-// =========================================================
-// 5. SLIDEOVER E FORMULÁRIO (Create/Update)
-// =========================================================
-
-// Abre o slideover para edição ou cadastro
-async function openSlideover(userId: number | null) {
-  // Limpa o estado antes de tudo
-  Object.assign(state, initialState);
-
-  isSlideoverOpen.value = true;
-  isEditing.value = userId !== null;
-  selectedUserId.value = userId;
-
-  if (userId) {
-    loadingUser.value = true;
-    try {
-      // Busca dados de um usuário específico
-      const apiEndpoint = `${config.public.apiBase}/users/${userId}/`;
-      const user = await $fetch<UserResponse>(apiEndpoint);
-
-      // Preenche o estado com os dados do usuário (usando .id)
-      Object.assign(state, {
-        email: user.email,
-        full_name: user.full_name,
-        phone: user.phone,
-        cpf: user.cpf,
-        vip: user.vip,
-        role_id: user.role_id,
-        password: "",
-        passwordConfirm: "",
-      });
-    } catch (error) {
-      console.error("Erro ao buscar dados do usuário:", error);
-      toast.add({
-        title: "Erro",
-        description:
-          "Não foi possível carregar os dados do usuário para edição.",
-        color: "red",
-      });
-      isSlideoverOpen.value = false;
-    } finally {
-      loadingUser.value = false;
-    }
-  }
-}
-
-// Submissão do Formulário (CREATE ou UPDATE)
-async function onSubmit(event: FormSubmitEvent<UserSchema>) {
-  loadingSubmit.value = true;
+  isLoading.value = true;
 
   try {
-    const apiEndpoint = `${config.public.apiBase}/users/`;
-    const method = isEditing.value ? "PUT" : "POST";
-    const url = isEditing.value
-      ? `${apiEndpoint}${selectedUserId.value}/`
-      : apiEndpoint;
+    // 2. Prepara o payload (remove formatações)
+    const payload = {
+      full_name: form.full_name,
+      email: form.email,
+      password: form.password,
+      vip: form.vip,
+      cpf: form.cpf.replace(/\D/g, ""),
+      phone: form.phone.replace(/\D/g, ""),
+      role: form.role,
+    };
 
-    // Prepara o payload
-    const payload = { ...event.data };
-
-    // Remove campos de senha se estiver editando e a senha não foi alterada
-    if (isEditing.value && !payload.password) {
-      delete payload.password;
-      delete payload.passwordConfirm;
-    }
-    // Remove o campo de confirmação de senha do payload final
-    delete payload.passwordConfirm;
-
-    // Remove máscaras antes de enviar
-    payload.cpf = payload.cpf?.replace(/\D/g, "");
-    payload.phone = payload.phone?.replace(/\D/g, "");
-
-    // Chamada da API
-    await $fetch(url, {
-      method: method,
+    // 3. Envia para a API
+    await $fetch(`${config.public.apiBase}/users/`, {
+      method: "POST",
       body: payload,
     });
 
     toast.add({
-      title: `Usuário ${isEditing.value ? "atualizado" : "cadastrado"} com sucesso!`,
+      title: "Sucesso!",
+      description: "Usuário cadastrado corretamente.",
       color: "green",
+      icon: "i-lucide-check-circle",
     });
 
-    // Fecha o painel, recarrega a tabela e limpa o estado
-    isSlideoverOpen.value = false;
-    fetchUsers(); // Atualiza a tabela
-    Object.assign(state, initialState); // Limpa o formulário
-  } catch (unknownError) {
-    console.error("Erro no cadastro/edição de usuário:", unknownError);
-    const errorData = (unknownError as { data?: { detail?: string } })?.data;
+    resetForm();
+  } catch (err: unknown) {
+    // Tipagem segura de erro
+    const error = err as ApiError;
+
+    // CORREÇÃO: Usando a variável 'error' para garantir que ela não seja marcada como "unused"
+    console.error("Erro detalhado:", error);
+
+    let messageDetalhada = "Erro desconhecido";
+
+    if (error.data) {
+      if (Array.isArray(error.data.detail)) {
+        messageDetalhada = error.data.detail
+          .map((e: { loc: string[]; msg: string }) => {
+            const campo = e.loc ? e.loc[e.loc.length - 1] : "";
+            return campo ? `${campo}: ${e.msg}` : e.msg;
+          })
+          .join(" | ");
+      } else if (error.data.detail && typeof error.data.detail === "string") {
+        messageDetalhada = error.data.detail;
+      } else if (error.data.message) {
+        messageDetalhada = error.data.message;
+      }
+    } else if (error.message) {
+      if (error.statusCode === 422) {
+        messageDetalhada =
+          "Dados inválidos ou já existentes (Verifique CPF/Email)";
+      } else {
+        messageDetalhada = error.message;
+      }
+    }
+
     toast.add({
-      title: "Erro",
-      description:
-        errorData?.detail ||
-        `Não foi possível ${isEditing.value ? "atualizar" : "cadastrar"} o usuário.`,
+      title: "Falha ao salvar",
+      description: messageDetalhada,
       color: "red",
+      icon: "i-lucide-x-circle",
+      timeout: 6000,
     });
   } finally {
-    loadingSubmit.value = false;
+    isLoading.value = false;
   }
 }
 </script>
-
-<style scoped>
-/* Estilos específicos, se necessário */
-</style>

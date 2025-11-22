@@ -1,9 +1,9 @@
 // app/pages/index.vue
 <template>
-  <div class="flex flex-col p-2 main-content">
+  <div class="flex flex-col p-6 main-content">
     <div>
       <div
-        class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2"
+        class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2"
       >
         <h1 class="text-2xl font-bold">KPI Cards</h1>
         <TimeFilter @update-range="onRangeUpdate" />
