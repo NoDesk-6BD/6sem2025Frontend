@@ -1,4 +1,5 @@
 <template>
+  <!-- app/components/SatisfactionMeter.vue -->
   <div>
     <client-only>
       <DoughnutChart

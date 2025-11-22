@@ -1,14 +1,5 @@
-// app/components/DashBase.vue
-<script setup lang="ts">
-// import { defineProps } from "vue"; // defineProps é um macro global em <script setup>
-
-const props = defineProps<{
-  dashName: string;
-  titleStyle: string;
-}>();
-</script>
-
 <template>
+  <!-- app/components/DashBase.vue -->
   <UCard
     class="bg-white shadow-md rounded-lg p-3 min-h-[20vh] max-h-[50vh] overflow-hidden"
   >
@@ -23,3 +14,12 @@ const props = defineProps<{
     </div>
   </UCard>
 </template>
+
+<script setup lang="ts">
+// import { defineProps } from "vue"; // defineProps é um macro global em <script setup>
+
+const props = defineProps<{
+  dashName: string;
+  titleStyle: string;
+}>();
+</script>

@@ -1,5 +1,5 @@
-// app/components/SideBar.vue
 <template>
+  <!-- app/components/SideBar.vue -->
   <aside
     class="min-h-screen transition-all duration-300 flex flex-col fixed lg:relative z-10"
     :class="[collapsed ? 'w-20' : 'w-64']"

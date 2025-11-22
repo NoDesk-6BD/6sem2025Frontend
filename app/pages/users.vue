@@ -1,4 +1,5 @@
 <template>
+  <!-- app/pages/users.vue -->
   <div class="flex flex-col p-6 main-content">
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2"

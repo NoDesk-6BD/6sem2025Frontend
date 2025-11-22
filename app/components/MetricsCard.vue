@@ -1,4 +1,21 @@
-//app/components/MetricsCard.vue
+<template>
+  <!-- app/components/MetricsCard.vue -->
+  <UCard
+    class="bg-white shadow-md rounded-lg"
+    :ui="{ body: { padding: 'py-2 px-4' } }"
+  >
+    <div class="flex justify-between items-center">
+      <h1 class="text-gray-500 font-medium text-lg">
+        {{ tituloMetrica }}
+      </h1>
+
+      <div :class="corValor" class="text-xl font-bold">
+        {{ valor }}
+      </div>
+    </div>
+  </UCard>
+</template>
+
 <script setup lang="ts">
 import { computed, toRef } from "vue";
 import type { MetricsCardResponse } from "~/types/interfaces";
@@ -50,20 +67,3 @@ const corValor = computed(() => {
   }
 });
 </script>
-
-<template>
-  <UCard
-    class="bg-white shadow-md rounded-lg"
-    :ui="{ body: { padding: 'py-2 px-4' } }"
-  >
-    <div class="flex justify-between items-center">
-      <h1 class="text-gray-500 font-medium text-lg">
-        {{ tituloMetrica }}
-      </h1>
-
-      <div :class="corValor" class="text-xl font-bold">
-        {{ valor }}
-      </div>
-    </div>
-  </UCard>
-</template>

@@ -1,5 +1,5 @@
-// app/components/ChartTicketsByCategory.vue
 <template>
+  <!-- app/components/ChartTicketsByCategory.vue -->
   <div class="h-full">
     <client-only>
       <BarChart :data="props.chartData" :options="chartOptions" />
