@@ -1,4 +1,5 @@
-// app/plugins/chart.ts
+/* plugins/chart.js */
+/* import { defineNuxtPlugin } from '#app' */
 import {
   Chart as ChartJS,
   Title,
@@ -10,22 +11,25 @@ import {
   CategoryScale,
   LinearScale,
   ArcElement,
+  Filler,
 } from "chart.js";
 
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import annotationPlugin from "chartjs-plugin-annotation";
 
 export default defineNuxtPlugin(() => {
-  // Registra os módulos necessários do Chart.js
   ChartJS.register(
     Title,
     Tooltip,
     Legend,
     BarElement,
-    LineElement, // <- necessário para gráficos de linha
-    PointElement, // <- necessário para pontos (scatter/line)
+    LineElement,
+    PointElement,
     CategoryScale,
     LinearScale,
     ArcElement,
+    Filler,
     ChartDataLabels,
+    annotationPlugin,
   );
 });
