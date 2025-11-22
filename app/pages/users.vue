@@ -90,7 +90,7 @@
           </UFormField>
 
           <!-- PERFIL DE ACESSO -->
-          <UFormField name="role_id" required :error="errors.role_id">
+          <UFormField name="role" required :error="errors.role">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
@@ -100,13 +100,13 @@
               </div>
             </template>
             <USelect
-              v-model="form.role_id"
+              v-model="form.role"
               :items="roles"
               option-attribute="label"
               value-attribute="value"
               placeholder="Selecione o perfil"
               class="w-full"
-              @change="errors.role_id = undefined"
+              @change="errors.role = undefined"
             />
           </UFormField>
 
@@ -199,9 +199,9 @@ const isLoading = ref(false);
 
 // Opções de Roles (Perfis)
 const roles = ref([
-  { label: "Admin", value: 1 },
-  { label: "Agent", value: 2 },
-  { label: "Viewer", value: 3 },
+  { label: "Administrador", value: "admin" },
+  { label: "Agente", value: "agent" },
+  { label: "Visualizador", value: "viewer" },
 ]);
 
 // Estado do formulário
@@ -213,7 +213,7 @@ const form = reactive({
   phone: "",
   cpf: "",
   vip: false,
-  role_id: undefined as number | undefined,
+  role: undefined as string | undefined,
 });
 
 // Estado dos erros (undefined = sem erro)
@@ -224,7 +224,7 @@ const errors = reactive({
   full_name: undefined as string | undefined,
   phone: undefined as string | undefined,
   cpf: undefined as string | undefined,
-  role_id: undefined as string | undefined,
+  role: undefined as string | undefined,
 });
 
 // --- FUNÇÃO DE LIMPEZA ---
@@ -237,7 +237,7 @@ function resetForm() {
   form.phone = "";
   form.cpf = "";
   form.vip = false;
-  form.role_id = undefined;
+  form.role = undefined;
 
   // 2. Limpa os erros visuais
   Object.keys(errors).forEach((key) => {
@@ -372,8 +372,8 @@ function validateForm() {
   }
 
   // 7. Role ID
-  if (!form.role_id) {
-    errors.role_id = "Selecione um perfil de acesso";
+  if (!form.role) {
+    errors.role = "Selecione um perfil de acesso";
     isValid = false;
   }
 
@@ -406,7 +406,7 @@ async function onSubmit() {
       vip: form.vip,
       cpf: form.cpf.replace(/\D/g, ""),
       phone: form.phone.replace(/\D/g, ""),
-      role_id: Number(form.role_id),
+      role: form.role,
     };
 
     // 3. Envia para a API
