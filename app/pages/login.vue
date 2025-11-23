@@ -46,5 +46,6 @@ const password = ref("");
 
 function handleLogin() {
   console.log("Realizando login:", username.value, password.value);
+  navigateTo("/dashboard");
 }
 </script>
