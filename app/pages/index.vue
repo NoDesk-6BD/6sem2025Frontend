@@ -10,7 +10,18 @@
       </div>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
-        <MetricsCard v-if="metrics_cards[0]" :payload="metrics_cards[0]" />
+        <NuxtLink
+          v-if="metrics_cards[0]"
+          to="/customers"
+          class="block hover:scale-[1.02] transition-transform duration-200"
+          title="Ver detalhes em Clientes"
+        >
+          <MetricsCard
+            v-if="metrics_cards[0]"
+            :payload="metrics_cards[0]"
+            class="cursor-pointer"
+          />
+        </NuxtLink>
         <MetricsCard v-if="metrics_cards[1]" :payload="metrics_cards[1]" />
         <MetricsCard v-if="metrics_cards[2]" :payload="metrics_cards[2]" />
         <MetricsCard v-if="metrics_cards[3]" :payload="metrics_cards[3]" />
