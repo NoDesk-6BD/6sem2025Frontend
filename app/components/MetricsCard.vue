@@ -1,4 +1,21 @@
-//app/components/MetricsCard.vue
+<template>
+  <!-- app/components/MetricsCard.vue -->
+  <UCard
+    class="bg-white shadow-md rounded-lg"
+    :ui="{ body: { padding: 'py-2 px-4' } }"
+  >
+    <div class="flex justify-between items-center">
+      <h1 class="text-gray-500 font-medium text-lg">
+        {{ tituloMetrica }}
+      </h1>
+
+      <div :class="corValor" class="text-xl font-bold">
+        {{ valor }}
+      </div>
+    </div>
+  </UCard>
+</template>
+
 <script setup lang="ts">
 import { computed, toRef } from "vue";
 import type { MetricsCardResponse } from "~/types/interfaces";
@@ -17,7 +34,13 @@ const tituloMetrica = payload.value?.titulo_metrica;
 
 // Função auxiliar: tenta converter valores para número
 const toNumber = (val: unknown): number | null => {
-  const num = Number(val);
+  if (val === null || val === undefined) return null;
+
+  // 1. Converte para string e REMOVE os pontos de milhar
+  const cleanVal = String(val).replace(/\./g, "");
+
+  // 2. Converte a string limpa para número
+  const num = Number(cleanVal);
   return isNaN(num) ? null : num;
 };
 
@@ -44,20 +67,3 @@ const corValor = computed(() => {
   }
 });
 </script>
-
-<template>
-  <UCard
-    class="bg-white shadow-md rounded-lg"
-    :ui="{ body: { padding: 'py-2 px-4' } }"
-  >
-    <div class="flex justify-between items-center">
-      <h1 class="text-gray-500 font-medium text-lg">
-        {{ tituloMetrica }}
-      </h1>
-
-      <div :class="corValor" class="text-xl font-bold">
-        {{ valor }}
-      </div>
-    </div>
-  </UCard>
-</template>

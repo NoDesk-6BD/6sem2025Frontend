@@ -1,4 +1,8 @@
-// app/components/DoughnutChart.vue
+<template>
+  <!-- app/components/DoughnutChart.vue -->
+  <Doughnut :data="data" :options="options" />
+</template>
+
 <script setup lang="ts">
 import { Doughnut } from "vue-chartjs";
 import type { ChartData, ChartOptions } from "chart.js";
@@ -8,7 +12,3 @@ defineProps<{
   options?: ChartOptions<"doughnut">;
 }>();
 </script>
-
-<template>
-  <Doughnut :data="data" :options="options" />
-</template>
