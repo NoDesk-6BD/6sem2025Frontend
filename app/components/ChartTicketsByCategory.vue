@@ -32,9 +32,9 @@ const chartOptions = ref<ChartOptions<"bar">>({
       labels: {
         usePointStyle: true,
         boxWidth: 8,
-        padding: 15,
+        padding: 20,
         font: {
-          size: 11,
+          size: 12,
         },
       },
     },
