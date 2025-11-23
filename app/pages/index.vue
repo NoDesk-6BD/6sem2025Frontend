@@ -62,6 +62,7 @@ import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
 import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
 import CustomLegend from "~/components/CustomLegend.vue";
 import MetricsCard from "~/components/MetricsCard.vue";
+import LazyTermsModal from "#components";
 import type {
   MetricsCardResponse,
   CriticalProjectsResponse,
@@ -69,7 +70,9 @@ import type {
   GaugeResponse,
 } from "~/types/interfaces";
 
-import { LazyTermsModal } from "#components";
+definePageMeta({
+  middleware: "root-redirect",
+});
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
