@@ -17,7 +17,9 @@
       </div>
     </div>
 
+    <!-- Cards sobre Métricas -->
     <div id="charts" class="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-4">
+      <!-- Gráfico 1: Evolução de Chamados (Linha) -->
       <dash-base
         class="col-span-1 lg:col-span-2 col-start-1"
         :dash-name="dashNameList[0] ?? ''"
@@ -26,30 +28,22 @@
         <ChartTicketsByCategory :chart-data="TicketsByCategoryData" />
       </dash-base>
 
+      <!-- Gráfico 2: Projetos Críticos (Barras) -->
       <dash-base
         :dash-name="dashNameList[1] ?? ''"
         :title-style="chartTitleClass"
       >
-        <div class="flex flex-col h-full">
-          <div class="flex-1">
-            <ChartCriticalProjects :chart-data="CriticalProjectsData" />
-          </div>
-
-          <CustomLegend
-            :labels="CriticalProjectsData.labels ?? []"
-            :colors="CriticalProjectsData.datasets[0]?.backgroundColor ?? []"
-          />
-        </div>
+        <!-- Apenas o gráfico, sem legenda customizada embaixo -->
+        <ChartCriticalProjects :chart-data="CriticalProjectsData" />
       </dash-base>
 
+      <!-- Gráfico 3: Subcategorias Críticas (Rosca) -->
       <dash-base
         :dash-name="dashNameList[2] ?? ''"
         :title-style="chartTitleClass"
       >
-        <SatisfactionMeter
-          :chart-data="teste_gauge"
-          :center-label="teste_gauge.datasets[0].label"
-        />
+        <!-- Substituído SatisfactionMeter por ChartCriticalCategories -->
+        <ChartCriticalCategories :chart-data="CriticalCategoriesData" />
       </dash-base>
     </div>
   </div>
@@ -59,16 +53,19 @@
 import { ref, onMounted } from "vue";
 import type { ChartData, ChartDataset } from "chart.js";
 import { useToast, useRuntimeConfig } from "#imports";
+// Importação dos componentes de gráficos
 import ChartTicketsByCategory from "~/components/ChartTicketsByCategory.vue";
 import ChartCriticalProjects from "~/components/ChartCriticalProjects.vue";
-import TimeFilter from "~/components/TimeFilter.vue"; // Adicionando importação de componente
-import CustomLegend from "~/components/CustomLegend.vue";
+import ChartCriticalCategories from "~/components/ChartCriticalCategories.vue";
+
+import TimeFilter from "~/components/TimeFilter.vue";
+// import CustomLegend from "~/components/CustomLegend.vue";
 import MetricsCard from "~/components/MetricsCard.vue";
+
 import type {
   MetricsCardResponse,
   CriticalProjectsResponse,
   TicketsByCategory,
-  GaugeResponse,
 } from "~/types/interfaces";
 
 const chartTitleClass = "text-gray-500 font-medium text-xl";
@@ -84,25 +81,19 @@ const config = useRuntimeConfig();
 
 type TicketsDataset = ChartDataset<"line", number[]>;
 
+// Dados para o gráfico de Rosca (Subcategorias)
 const CriticalCategoriesData = ref<ChartData<"doughnut", number[], string>>({
   labels: [],
   datasets: [],
 });
 
-const teste_gauge: GaugeResponse = {
-  datasets: [
-    {
-      data: [90, 10],
-      label: "Satisfação",
-    },
-  ],
-};
-
+// Dados para o gráfico de Barras (Projetos)
 const CriticalProjectsData = ref<ChartData<"bar", number[], string>>({
   labels: [],
   datasets: [],
 });
 
+// Dados para o gráfico de Linha (Evolução)
 const TicketsByCategoryData = ref<ChartData<"line", number[], string>>({
   labels: [],
   datasets: [],
@@ -121,7 +112,7 @@ const colors = [
   "#E11D48", // Vermelho Escuro
 ];
 
-// Função utilitária para pegar o último dia disponível
+/* // Função utilitária para pegar o último dia disponível
 function getLastDateKey(obj: Record<string, unknown>) {
   const keys = Object.keys(obj);
   return keys.sort().at(-1) ?? "";
@@ -157,7 +148,7 @@ function getBlueShade(value: number, min: number, max: number) {
   const g = Math.round(26 + ratio * (154 - 26));
   const b = Math.round(51 + ratio * (219 - 51));
   return `rgb(${r},${g},${b})`;
-}
+} */
 
 async function fetchMetricsCard(
   kpi_id: number,
@@ -201,35 +192,37 @@ async function fetchCriticalCategories(params?: {
   end_date?: string;
 }) {
   try {
-    const res = await $fetch<Record<string, unknown>>(
-      `${config.public.apiBase}/dashboard/categories`,
+    // 1. Prepara a query string (se houver filtros de data)
+    const query =
+      params?.start_date && params?.end_date
+        ? `?start_date=${params.start_date}&end_date=${params.end_date}`
+        : "";
+
+    // 2. Faz a requisição
+    // Espera: [{"name":"Funcionalidade indisponível","count":10227}, ...]
+    const res = await $fetch<{ name: string; count: number }[]>(
+      `${config.public.apiBase}/dashboard/categories${query}`,
     );
 
-    let data: { name: string; count: number }[] = [];
-    if (params?.start_date && params?.end_date) {
-      data = getDataByPeriod(res, params.start_date, params.end_date) as {
-        name: string;
-        count: number;
-      }[];
-      data = sumByName(data); // soma por nome
-    } else {
-      const lastDate = getLastDateKey(res);
-      data = (res[lastDate] as { name: string; count: number }[]) ?? [];
+    if (!Array.isArray(res)) {
+      console.error("Formato inesperado para categorias:", res);
+      throw new Error("Resposta da API não é um array");
     }
 
-    // Calcula min/max para escala
-    const counts = data.map((c) => c.count);
-    const min = Math.min(...counts);
-    const max = Math.max(...counts);
+    // 3. Extrai labels e valores
+    const labels = res.map((item) => item.name);
+    const dataValues = res.map((item) => item.count);
 
+    // 4. Monta os dados do gráfico
     CriticalCategoriesData.value = {
-      labels: data.map((c) => c.name),
+      labels: labels,
       datasets: [
         {
-          label: "Categorias Críticas",
-          data: data.map((c) => c.count),
-          backgroundColor: data.map((c) => getBlueShade(c.count, min, max)),
-          borderWidth: 1,
+          label: "Ocorrências",
+          data: dataValues,
+          // Usa a paleta de cores padrão ciclando se necessário
+          backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+          hoverOffset: 4, // Efeito visual ao passar o mouse
         },
       ],
     };
@@ -237,6 +230,7 @@ async function fetchCriticalCategories(params?: {
     console.error("Erro ao buscar categorias:", error);
     toast.add({
       title: `Erro ao carregar dados do gráfico: ${dashNameList[2] ?? ""}`,
+      color: "red",
     });
   }
 }
@@ -268,20 +262,17 @@ async function fetchCriticalProjects(params?: {
 
     // LÓGICA RESTAURADA: Gera um único dataset, como no seu código original
     CriticalProjectsData.value = {
-      // CORREÇÃO 3: Mapeia o nome do projeto (product_name) e junta com a formatação original
       labels: projectRows.map((p) =>
         _formatLabel(p.product_name, 18).join(" "),
       ),
       datasets: [
         {
           label: "Projetos Críticos",
-          // CORREÇÃO 4: Mapeia a contagem de tickets (open_tickets)
           data: projectRows.map((p) => p.open_tickets),
           borderWidth: 1,
           backgroundColor: projectRows.map(
             (_, index) => colors[index % colors.length],
           ),
-          // Antes estava: backgroundColor: colors[0],  Agora, mapeamos o array de cores para que cada projeto tenha uma cor diferente.
         },
       ],
     };

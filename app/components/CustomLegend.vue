@@ -2,18 +2,23 @@
   <!-- app/components/CustomLegend.vue -->
   <div
     v-if="labels.length"
-    class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 mt-4 px-4"
+    class="flex flex-wrap gap-x-6 gap-y-2 mt-2 px-2 justify-center"
   >
     <div
       v-for="(label, index) in labels"
-      :key="label"
-      class="flex items-center"
+      :key="typeof label === 'string' ? label : index"
+      class="flex items-center min-w-[120px]"
     >
+      <!-- Círculo colorido -->
       <span
-        class="h-3 w-3 rounded-sm inline-block mr-2"
-        :style="{ backgroundColor: colors[index] }"
+        class="h-3 w-3 rounded-full inline-block mr-2 flex-shrink-0"
+        :style="{ backgroundColor: getColor(index) }"
       />
-      <span class="text-sm text-gray-600 truncate" :title="label">
+      <!-- Texto da legenda -->
+      <span
+        class="text-sm text-gray-600 truncate"
+        :title="typeof label === 'string' ? label : ''"
+      >
         {{ label }}
       </span>
     </div>
@@ -21,8 +26,16 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  labels: string[];
-  colors: string[];
+const props = defineProps<{
+  labels: string[] | string[][]; // Aceita string[] ou string[][]
+  colors: string[] | unknown; // Cores podem vir como array ou string única
 }>();
+
+// Função auxiliar para garantir que pegamos uma cor válida
+const getColor = (index: number): string => {
+  if (Array.isArray(props.colors)) {
+    return props.colors[index] || "#ccc";
+  }
+  return (props.colors as string) || "#ccc";
+};
 </script>
