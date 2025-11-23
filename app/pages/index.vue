@@ -69,6 +69,8 @@ import type {
   GaugeResponse,
 } from "~/types/interfaces";
 
+import { LazyTermsModal } from "#components";
+
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 const dashNameList = [
@@ -185,6 +187,16 @@ async function fetchMetricsCard(
   } catch (error) {
     console.error("Erro ao buscar métricas:", error);
     return null;
+  }
+}
+
+async function checkUserAcceptance(user_id: number) {
+  try {
+    return await $fetch(
+      `${config.public.apiBase}/terms/check_user_acceptance?user_id=${user_id}`,
+    );
+  } catch (err) {
+    console.error("Erro:", err);
   }
 }
 
@@ -400,11 +412,34 @@ const _formatLabel = (str: string, maxLength: number): string[] => {
   return lines;
 };
 
-onMounted(() => {
-  // Ao iniciar, mostra os últimos 7 dias
+const overlay = useOverlay();
+
+onMounted(async () => {
+  const result = await checkUserAcceptance(1);
+
+  if (!result.accepted) {
+    const modal = overlay.create(LazyTermsModal);
+
+    const instance = modal.open({
+      latest_terms: result.latest_terms,
+    });
+
+    const accepted = await instance.result;
+
+    if (accepted) {
+      // chamar sua API salvando o aceite
+      await acceptTerms(result.latest_terms.id);
+      reloadDashboard();
+    }
+  } else {
+    reloadDashboard();
+  }
+});
+
+function reloadDashboard() {
   fetchCriticalCategories();
   fetchCriticalProjects();
   fetchTicketsByCategory();
   iterate_metrics_card_();
-});
+}
 </script>

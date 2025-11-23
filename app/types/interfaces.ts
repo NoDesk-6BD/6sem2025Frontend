@@ -37,3 +37,15 @@ export interface GaugeResponse {
     label: string;
   }[];
 }
+
+export enum TermsType {
+  REQUIRED = "required",
+  OPTIONAL = "optional",
+}
+export interface TermsResponse {
+  id: number;
+  version: string;
+  content: string;
+  type: TermsType;
+  created_at: Date;
+}
