@@ -16,7 +16,8 @@
         <USelectMenu
           id="customer-select"
           v-model="selectedCustomer"
-          :options="customerOptions"
+          :items="customerOptions"
+          :loading="loadingCustomers"
           placeholder="Selecione um cliente"
           class="w-64"
           searchable
@@ -134,25 +135,66 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { useRuntimeConfig, useToast } from "#imports";
 // Importa os componentes de Dash que já usamos
 import DashBase from "~/components/DashBase.vue";
 import SatisfactionMeter from "~/components/SatisfactionMeter.vue";
 import type { GaugeResponse } from "~/types/interfaces"; // Importa a interface que o SatisfactionMeter espera
 
-// --- DADOS MOCK (Exemplos) ---
-
+// --- CONFIGURAÇÃO ---
+const config = useRuntimeConfig();
+const toast = useToast();
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
-// Filtro de Cliente
-const selectedCustomer = ref(null);
-const customerOptions = ref([
-  "Cliente Alpha",
-  "Cliente Beta",
-  "Cliente Omega",
-  "Cliente Delta",
-  "Cliente Gamma",
-]);
+// --- ESTADOS ---
+const loadingCustomers = ref(false);
+const selectedCustomer = ref<string | null>(null);
+const customerOptions = ref<string[]>([]); // Lista de nomes de clientes
 
+// Interface para tipar a resposta da API de Companies
+interface Company {
+  company_id: number;
+  name: string;
+  cnpj: string;
+}
+
+interface CompaniesResponse {
+  companies: Company[];
+}
+
+// --- FETCH DATA ---
+
+async function fetchCompanies() {
+  loadingCustomers.value = true;
+  try {
+    const res = await $fetch<CompaniesResponse>(
+      `${config.public.apiBase}/dashboard/companies`,
+    );
+
+    if (res && Array.isArray(res.companies)) {
+      // Mapeia apenas o nome da empresa para o array de opções
+      customerOptions.value = res.companies.map((c) => c.name).sort();
+    } else {
+      console.error("Formato de resposta inválido para companies:", res);
+      toast.add({
+        title: "Erro ao carregar lista de clientes",
+        description: "Formato de dados inesperado.",
+        color: "red",
+      });
+    }
+  } catch (error) {
+    console.error("Erro ao buscar companies:", error);
+    toast.add({
+      title: "Erro de conexão",
+      description: "Não foi possível carregar a lista de clientes.",
+      color: "red",
+    });
+  } finally {
+    loadingCustomers.value = false;
+  }
+}
+
+// --- DADOS MOCK (Exemplos) ---
 // Dados de exemplo para os termômetros
 const tempoRespostaData = ref<GaugeResponse>({
   datasets: [
@@ -170,5 +212,10 @@ const satisfacaoClienteData = ref<GaugeResponse>({
       label: "CSAT",
     },
   ],
+});
+
+// --- LIFECYCLE ---
+onMounted(() => {
+  fetchCompanies();
 });
 </script>
