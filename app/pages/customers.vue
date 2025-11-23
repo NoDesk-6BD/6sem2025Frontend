@@ -48,7 +48,7 @@
       </template>
 
       <!-- Container tabela with scroll -->
-      <div class="overflow-auto max-h-[350px]">
+      <div class="overflow-auto max-h-[325px]">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50 sticky top-0 z-10">
             <tr>
