@@ -3,29 +3,17 @@
 @import "@nuxt/ui";
 
 :root {
+  /* Definições de variáveis globais do tema */
   --ui-header-height: --spacing(16);
+  /* Cores personalizadas (se ainda forem necessárias fora do Tailwind config) */
   --log_off-color: #ffbbbb;
   --card_gap: 20px;
+  /* Cores de botões customizados */
   --outer_menu_btn_color: rgb(67, 206, 141);
   --inner_menu_btn_color: rgb(97, 224, 165);
   --sidebar-btn-color: #ffffff;
   --search-btn-color: #808080;
 }
-
-/*.container {
-  REMOVER AS REGRAS DE GRID FIXO
-  display: grid;
-  grid-template-columns: 1fr 6fr;
-  height: 100vh;
-  width: 100vw;
-}
-
-.sidebar-content {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100%;
-} */
 
 .main-content {
   background-color: #ecf0f1;

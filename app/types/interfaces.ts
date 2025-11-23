@@ -1,3 +1,4 @@
+/* app/types/interfaces.ts */
 export interface MetricsCardResponse {
   titulo_metrica: string;
   valor_metrica: string;

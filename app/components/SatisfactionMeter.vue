@@ -1,4 +1,5 @@
 <template>
+  <!-- app/components/SatisfactionMeter.vue -->
   <div>
     <client-only>
       <DoughnutChart
@@ -12,7 +13,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Chart, type ChartOptions } from "chart.js";
+import { Chart } from "chart.js";
+import type { ChartOptions } from "chart.js";
 import chartjsPluginAnnotation from "chartjs-plugin-annotation";
 import DoughnutChart from "./DoughnutChart.vue";
 import type { GaugeResponse } from "~/types/interfaces";
@@ -60,10 +62,10 @@ watch(
 const chartOptions = ref<ChartOptions<"doughnut">>({
   responsive: true,
   maintainAspectRatio: true,
-  aspectRatio: 2,
+  aspectRatio: 1.8,
   circumference: 180,
   rotation: -90,
-  cutout: "70%",
+  cutout: "75%",
   plugins: {
     legend: { display: false },
     title: { display: false },

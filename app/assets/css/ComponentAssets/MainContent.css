@@ -29,7 +29,7 @@ Comentar todas as regras. Ele não é mais necessário, pois o index.vue já cui
   font-weight: bold;
 }
 
-/* Região dos gráficos
+Região dos gráficos */
 
 .dash-boards {
   display: grid;
@@ -49,5 +49,3 @@ Comentar todas as regras. Ele não é mais necessário, pois o index.vue já cui
   border-radius: 8px;
   padding: 10px;
 }
-
-*/

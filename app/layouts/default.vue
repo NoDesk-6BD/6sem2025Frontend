@@ -1,4 +1,5 @@
 <template>
+  <!-- app/layouts/default.vue -->
   <div class="flex">
     <Sidebar :collapsed="collapsed" />
 
