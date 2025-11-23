@@ -62,10 +62,10 @@ watch(
 const chartOptions = ref<ChartOptions<"doughnut">>({
   responsive: true,
   maintainAspectRatio: true,
-  aspectRatio: 2,
+  aspectRatio: 1.8,
   circumference: 180,
   rotation: -90,
-  cutout: "70%",
+  cutout: "75%",
   plugins: {
     legend: { display: false },
     title: { display: false },

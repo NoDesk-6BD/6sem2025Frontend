@@ -29,16 +29,34 @@
     <!-- Grid 1: Tabela de Tickets Vencidos (com rolagem) -->
     <UCard :ui="{ body: { padding: 'p-0' } }">
       <template #header>
-        <div class="flex justify-between items-center">
+        <div
+          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4"
+        >
           <h2 class="text-lg font-semibold text-gray-600">Tickets Vencidos</h2>
-          <span v-if="expiredTickets.length" class="text-sm text-gray-500">
-            Total: {{ expiredTickets.length }}
-          </span>
+
+          <!-- Controles de Paginação no Cabeçalho -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-500">Itens por página:</span>
+              <!-- Seletor de Limite -->
+              <!-- @update:model-value="onLimitChange" garante o reset da página e refresh -->
+              <USelect
+                v-model="limit"
+                :items="[50, 100, 150, 200]"
+                class="w-20"
+                size="sm"
+              />
+            </div>
+
+            <span class="text-sm font-medium text-gray-700">
+              Total: {{ totalTickets }}
+            </span>
+          </div>
         </div>
       </template>
 
       <!-- Container com rolagem vertical e horizontal -->
-      <div class="overflow-auto max-h-[400px]">
+      <div class="overflow-auto max-h-[350px]">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50 sticky top-0 z-10">
             <tr>
@@ -78,6 +96,10 @@
             <!-- Loading State -->
             <tr v-if="loadingTickets">
               <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                <UIcon
+                  name="i-lucide-loader-2"
+                  class="animate-spin w-6 h-6 mx-auto mb-2"
+                />
                 Carregando tickets...
               </td>
             </tr>
@@ -94,7 +116,7 @@
               v-for="(ticket, index) in expiredTickets"
               v-else
               :key="index"
-              class="hover:bg-gray-50"
+              class="hover:bg-gray-50 transition-colors"
             >
               <!-- Data Abertura -->
               <td
@@ -144,6 +166,55 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Rodapé com Paginação -->
+      <template #footer>
+        <div class="flex flex-wrap justify-center items-center gap-2 py-2">
+          <!-- Botão Primeira Página -->
+          <UButton
+            icon="i-lucide-chevrons-left"
+            color="gray"
+            variant="ghost"
+            size="sm"
+            :disabled="page === 1 || loadingTickets"
+            title="Primeira página"
+            @click="page = 1"
+          />
+
+          <!--
+            Componente de Paginação
+            Nota: O watcher no script cuidará do reload quando 'page' mudar.
+          -->
+          <UPagination
+            v-model="page"
+            :page-count="limit"
+            :total="totalTickets"
+            :max="7"
+            :disabled="loadingTickets"
+            :prev-button="{
+              icon: 'i-lucide-chevron-left',
+              color: 'gray',
+              variant: 'ghost',
+            }"
+            :next-button="{
+              icon: 'i-lucide-chevron-right',
+              color: 'gray',
+              variant: 'ghost',
+            }"
+          />
+
+          <!-- Botão Última Página -->
+          <UButton
+            icon="i-lucide-chevrons-right"
+            color="gray"
+            variant="ghost"
+            size="sm"
+            :disabled="page === pageCount || loadingTickets"
+            title="Última página"
+            @click="page = pageCount"
+          />
+        </div>
+      </template>
     </UCard>
 
     <!-- Grid 2: Termômetros de Satisfação -->
@@ -179,9 +250,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRuntimeConfig, useToast } from "#imports";
-// Importa os componentes de Dash que já usamos
 import DashBase from "~/components/DashBase.vue";
 import SatisfactionMeter from "~/components/SatisfactionMeter.vue";
 import type { GaugeResponse } from "~/types/interfaces"; // Importa a interface que o SatisfactionMeter espera
@@ -197,6 +267,17 @@ const selectedCustomer = ref<string | null>(null);
 const customerOptions = ref<string[]>([]); // Lista de nomes de clientes
 const loadingTickets = ref(false);
 const expiredTickets = ref<ExpiredTicket[]>([]);
+const totalTickets = ref(0);
+
+// Estado da Paginação
+const page = ref(1);
+const limit = ref(50); // Valor padrão inicial
+
+// Computed para total de páginas (usado nos botões de primeira/última página)
+const pageCount = computed(() => {
+  if (totalTickets.value === 0) return 1;
+  return Math.ceil(totalTickets.value / limit.value);
+});
 
 // --- INTERFACES ---
 // Interface para tipar a resposta da API de Companies
@@ -278,58 +359,68 @@ async function fetchCompanies() {
 }
 
 // 2. Buscar Tickets Vencidos
+/* Manipulador de mudança de limite (Dropdown de itens por página)
+function onLimitChange() {
+  page.value = 1; // Volta para a primeira página
+  fetchExpiredTickets(); // Recarrega os dados
+}*/
+
 async function fetchExpiredTickets() {
+  if (loadingTickets.value) return; // Evita chamadas duplicadas se já estiver carregando
   loadingTickets.value = true;
+  // Cálculo do offset: (página atual - 1) * itens por página
+  const offset = (page.value - 1) * limit.value;
+
   try {
-    // Busca 50 itens inicialmente (ajuste o limit conforme necessário ou implemente paginação real depois)
-    const limit = 50;
     const res = await $fetch<ExpiredTicketsResponse>(
-      `${config.public.apiBase}/dashboard/expired_tickets_list?limit=${limit}`,
+      `${config.public.apiBase}/dashboard/expired_tickets_list?limit=${limit.value}&offset=${offset}`,
     );
 
     if (res && Array.isArray(res.items)) {
       expiredTickets.value = res.items;
+      totalTickets.value = res.total;
     } else {
-      console.error("Formato inválido para tickets vencidos:", res);
-      toast.add({
-        title: "Erro",
-        description: "Formato de dados de tickets inesperado.",
-        color: "red",
-      });
+      console.error("Formato inválido:", res);
+      expiredTickets.value = [];
+      totalTickets.value = 0;
     }
   } catch (error) {
-    console.error("Erro ao buscar tickets vencidos:", error);
-    toast.add({
-      title: "Erro de conexão",
-      description: "Não foi possível carregar a lista de tickets vencidos.",
-      color: "red",
-    });
+    console.error("Erro tickets:", error);
+    toast.add({ title: "Erro ao carregar tickets", color: "red" });
+    expiredTickets.value = [];
   } finally {
     loadingTickets.value = false;
   }
 }
 
-// --- DADOS MOCK (Exemplos) ---
-// Dados de exemplo para os termômetros
+// --- WATCHERS (CORREÇÃO 3: Reativados para garantir o fluxo correto) ---
+// 1. Observa mudança de página (acionado pelo UPagination ou botões)
+watch(page, () => {
+  fetchExpiredTickets();
+});
+
+// 2. Observa mudança no limite por página
+watch(limit, () => {
+  // Se não estivermos na página 1, voltar para a 1 vai disparar o watcher de 'page' acima,
+  // que por sua vez chama o fetch.
+  if (page.value !== 1) {
+    page.value = 1;
+  } else {
+    // Se já estivermos na página 1, precisamos chamar o fetch manualmente
+    // pois o watcher de 'page' não será disparado.
+    fetchExpiredTickets();
+  }
+});
+
+// --- DADOS MOCKADOS ---
+// Valores dos termômetros (mockados)
 const tempoRespostaData = ref<GaugeResponse>({
-  datasets: [
-    {
-      data: [85, 15], // 85%
-      label: "SLA",
-    },
-  ],
+  datasets: [{ data: [85, 15], label: "SLA" }],
 });
-
 const satisfacaoClienteData = ref<GaugeResponse>({
-  datasets: [
-    {
-      data: [65, 35], // 65% (para mostrar a cor vermelha de exemplo)
-      label: "CSAT",
-    },
-  ],
+  datasets: [{ data: [65, 35], label: "CSAT" }],
 });
 
-// --- LIFECYCLE ---
 onMounted(() => {
   fetchCompanies();
   fetchExpiredTickets();
