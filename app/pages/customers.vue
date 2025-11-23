@@ -29,71 +29,116 @@
     <!-- Grid 1: Tabela de Tickets Vencidos (com rolagem) -->
     <UCard :ui="{ body: { padding: 'p-0' } }">
       <template #header>
-        <h2 class="text-lg font-semibold text-gray-600">Tickets Vencidos</h2>
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-gray-600">Tickets Vencidos</h2>
+          <span v-if="expiredTickets.length" class="text-sm text-gray-500">
+            Total: {{ expiredTickets.length }}
+          </span>
+        </div>
       </template>
 
       <!-- Container com rolagem vertical e horizontal -->
       <div class="overflow-auto max-h-[400px]">
         <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50 sticky top-0">
+          <thead class="bg-gray-50 sticky top-0 z-10">
             <tr>
               <th
                 scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                class="px-6 py-3 text-left text-xs font-hard text-gray-500 uppercase tracking-wider"
               >
-                Ticket ID
+                DATA ABERTURA
               </th>
               <th
                 scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                class="px-6 py-3 text-left text-xs font-hard text-gray-500 uppercase tracking-wider"
               >
-                Assunto
+                TEMPO VENCIDO
               </th>
               <th
                 scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                class="px-6 py-3 text-left text-xs font-hard text-gray-500 uppercase tracking-wider"
               >
-                Status
+                ASSUNTO
               </th>
               <th
                 scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                class="px-6 py-3 text-left text-xs font-hard text-gray-500 uppercase tracking-wider"
               >
-                Vencimento
+                VIP
               </th>
               <th
                 scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                class="px-6 py-3 text-left text-xs font-hard text-gray-500 uppercase tracking-wider"
               >
-                Solicitante
+                CLIENTE
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <!-- Dados de Exemplo (serão substituídos por dados reais) -->
-            <tr v-for="n in 15" :key="n" class="hover:bg-gray-50">
+            <!-- Loading State -->
+            <tr v-if="loadingTickets">
+              <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                Carregando tickets...
+              </td>
+            </tr>
+
+            <!-- Empty State -->
+            <tr v-else-if="expiredTickets.length === 0">
+              <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                Nenhum ticket vencido encontrado.
+              </td>
+            </tr>
+
+            <!-- Lista Real -->
+            <tr
+              v-for="(ticket, index) in expiredTickets"
+              v-else
+              :key="index"
+              class="hover:bg-gray-50"
+            >
+              <!-- Data Abertura -->
               <td
                 class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
               >
-                TKT-10{{ n }}
+                {{ formatDate(ticket.data_criacao) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                Problema no login do sistema X
-              </td>
+
+              <!-- Tempo Vencido (Dias) -->
               <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800"
-                >
-                  Vencido
+                <span class="text-sm text-red-600 font-bold">
+                  {{ minutesToDays(ticket.tempo_vencido_minutos) }}
                 </span>
               </td>
+
+              <!-- Assunto -->
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium"
+                class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 max-w-xs truncate"
+                :title="ticket.titulo"
               >
-                1{{ n }}/10/2025
+                {{ ticket.titulo }}
               </td>
+
+              <!-- VIP (Ícone) -->
+              <td class="px-6 py-4 whitespace-nowrap text-center">
+                <div class="flex items-center">
+                  <UIcon
+                    v-if="ticket.user_vip === 'Sim'"
+                    name="i-lucide-check-circle"
+                    class="text-green-500 w-5 h-5"
+                    title="VIP: Sim"
+                  />
+                  <UIcon
+                    v-else
+                    name="i-lucide-x-circle"
+                    class="text-gray-400 w-5 h-5"
+                    title="VIP: Não"
+                  />
+                </div>
+              </td>
+
+              <!-- Cliente -->
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                usuarioc{{ n }}@cliente.com
+                {{ ticket.compania_nome }}
               </td>
             </tr>
           </tbody>
@@ -150,7 +195,10 @@ const chartTitleClass = "text-gray-500 font-medium text-xl";
 const loadingCustomers = ref(false);
 const selectedCustomer = ref<string | null>(null);
 const customerOptions = ref<string[]>([]); // Lista de nomes de clientes
+const loadingTickets = ref(false);
+const expiredTickets = ref<ExpiredTicket[]>([]);
 
+// --- INTERFACES ---
 // Interface para tipar a resposta da API de Companies
 interface Company {
   company_id: number;
@@ -162,8 +210,43 @@ interface CompaniesResponse {
   companies: Company[];
 }
 
-// --- FETCH DATA ---
+// Interface para os tickets vencidos resposta da API
+interface ExpiredTicket {
+  tempo_vencido_minutos: number;
+  data_criacao: string;
+  titulo: string;
+  compania_nome: string;
+  user_vip: string; // "Sim" ou "Não"
+}
 
+interface ExpiredTicketsResponse {
+  items: ExpiredTicket[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// --- HELPERS DE FORMATAÇÃO ---
+// Formata Data ISO para dd/mm/aaaa
+function formatDate(isoDate: string): string {
+  if (!isoDate) return "-";
+  const date = new Date(isoDate);
+  return new Intl.DateTimeFormat("pt-BR").format(date);
+}
+
+// Converte minutos para dias INTEIROS com formatação pt-BR (ex: 1.058 dias)
+function minutesToDays(minutes: number): string {
+  if (!minutes) return "0 dias";
+  const days = minutes / 1440; // 1440 minutos em um dia
+  // Formata sem casas decimais (arredonda automaticamente pelo Intl ou math se preferir explícito)
+  const formatted = new Intl.NumberFormat("pt-BR", {
+    maximumFractionDigits: 0, // Remove as casas decimais
+  }).format(days);
+  return `${formatted} dias`;
+}
+
+// --- FETCH DATA ---
+// 1. Busca a lista de companies para popular o select de clientes
 async function fetchCompanies() {
   loadingCustomers.value = true;
   try {
@@ -194,6 +277,38 @@ async function fetchCompanies() {
   }
 }
 
+// 2. Buscar Tickets Vencidos
+async function fetchExpiredTickets() {
+  loadingTickets.value = true;
+  try {
+    // Busca 50 itens inicialmente (ajuste o limit conforme necessário ou implemente paginação real depois)
+    const limit = 50;
+    const res = await $fetch<ExpiredTicketsResponse>(
+      `${config.public.apiBase}/dashboard/expired_tickets_list?limit=${limit}`,
+    );
+
+    if (res && Array.isArray(res.items)) {
+      expiredTickets.value = res.items;
+    } else {
+      console.error("Formato inválido para tickets vencidos:", res);
+      toast.add({
+        title: "Erro",
+        description: "Formato de dados de tickets inesperado.",
+        color: "red",
+      });
+    }
+  } catch (error) {
+    console.error("Erro ao buscar tickets vencidos:", error);
+    toast.add({
+      title: "Erro de conexão",
+      description: "Não foi possível carregar a lista de tickets vencidos.",
+      color: "red",
+    });
+  } finally {
+    loadingTickets.value = false;
+  }
+}
+
 // --- DADOS MOCK (Exemplos) ---
 // Dados de exemplo para os termômetros
 const tempoRespostaData = ref<GaugeResponse>({
@@ -217,5 +332,6 @@ const satisfacaoClienteData = ref<GaugeResponse>({
 // --- LIFECYCLE ---
 onMounted(() => {
   fetchCompanies();
+  fetchExpiredTickets();
 });
 </script>
