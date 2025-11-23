@@ -101,7 +101,7 @@
 
             <!-- Lista de tickets -->
             <tr
-              v-for="(ticket, index) in expiredTickets"
+              v-for="(ticket, index) in filteredTickets"
               :key="index"
               class="hover:bg-gray-50 transition-colors"
             >
@@ -200,15 +200,6 @@
 </template>
 
 <script setup lang="ts">
-/**
- * Página Customers.vue — Revisada e Organizada
- * Inclui:
- * - Paginação reativa
- * - Busca de tickets com controle de offset/limit
- * - Tratamento detalhado de erros
- * - Logs de debug
- */
-
 import { ref, computed, onMounted, watch } from "vue";
 import { useRuntimeConfig, useToast } from "#imports";
 import DashBase from "~/components/DashBase.vue";
@@ -243,6 +234,14 @@ const offset = computed(() => (page.value - 1) * limit.value);
 const pageCount = computed(() => {
   if (totalExpiredGlobal.value === 0) return 0; // Ainda não carregou
   return Math.ceil(totalExpiredGlobal.value / limit.value);
+});
+
+// Filtra tickets pelo cliente selecionado
+const filteredTickets = computed(() => {
+  if (!selectedCustomer.value) return expiredTickets.value;
+  return expiredTickets.value.filter(
+    (t) => t.compania_nome === selectedCustomer.value,
+  );
 });
 
 // -------------------------------
@@ -328,7 +327,10 @@ async function fetchCompanies() {
     );
 
     if (Array.isArray(res.companies)) {
-      customerOptions.value = res.companies.map((c) => c.name).sort();
+      customerOptions.value = [
+        "Todos os clientes",
+        ...res.companies.map((c) => c.name).sort(),
+      ];
     } else {
       throw new Error("Formato inválido na resposta de companies.");
     }
@@ -414,6 +416,28 @@ watch(page, (newPage) => {
   if (newPage < 1) {
     page.value = 1;
   }
+});
+
+watch(selectedCustomer, () => {
+  // Quando trocar o cliente, voltar para página 1 e recarregar
+  page.value = 1; // Não chamamos fetch novamente pois o filtro é local
+});
+
+watch(selectedCustomer, (newVal) => {
+  console.log("Filtro de cliente mudou:", newVal);
+
+  // Caso selecione "Todos os clientes"
+  if (!newVal || newVal === "Todos os clientes") {
+    selectedCustomer.value = null;
+    page.value = 1;
+    fetchExpiredTickets();
+    return;
+  }
+
+  // Aplicar filtro local por página atual
+  expiredTickets.value = expiredTickets.value.filter(
+    (ticket) => ticket.compania_nome === newVal,
+  );
 });
 
 // -------------------------------
