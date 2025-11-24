@@ -21,6 +21,9 @@
           class="w-64"
           searchable
           searchable-placeholder="Buscar cliente..."
+          value-attribute="value"
+          label-attribute="label"
+          :transform="(item) => item.value"
         />
       </div>
     </div>
@@ -217,8 +220,8 @@ const chartTitleClass = "text-gray-500 font-medium text-xl";
 // ESTADOS
 // -------------------------------
 const loadingCustomers = ref(false);
-const selectedCustomer = ref<string | null>(null);
-const customerOptions = ref<string[]>([]);
+const selectedCustomer = ref<number | null>(null);
+const customerOptions = ref<{ label: string; value: number | null }[]>([]);
 const loadingTickets = ref(false);
 const expiredTickets = ref<ExpiredTicket[]>([]);
 const totalTickets = ref(0);
@@ -237,12 +240,7 @@ const pageCount = computed(() => {
 });
 
 // Filtra tickets pelo cliente selecionado
-const filteredTickets = computed(() => {
-  if (!selectedCustomer.value) return expiredTickets.value;
-  return expiredTickets.value.filter(
-    (t) => t.compania_nome === selectedCustomer.value,
-  );
-});
+const filteredTickets = computed(() => expiredTickets.value);
 
 // -------------------------------
 // INTERFACES
@@ -328,8 +326,11 @@ async function fetchCompanies() {
 
     if (Array.isArray(res.companies)) {
       customerOptions.value = [
-        "Todos os clientes",
-        ...res.companies.map((c) => c.name).sort(),
+        { label: "Todos os clientes", value: null },
+        ...res.companies.map((c) => ({
+          label: c.name,
+          value: c.company_id,
+        })),
       ];
     } else {
       throw new Error("Formato inválido na resposta de companies.");
@@ -362,11 +363,17 @@ async function fetchExpiredTickets() {
     offset: offset.value,
   });
 
+  const companyParam =
+    selectedCustomer.value && typeof selectedCustomer.value === "object"
+      ? selectedCustomer.value.value
+      : (selectedCustomer.value ?? undefined);
+
   try {
     const res = await $fetch<ExpiredTicketsResponse>(url, {
       query: {
         limit: limit.value,
         offset: offset.value,
+        company_id: companyParam,
       },
       onResponseError({ response }) {
         console.error("❌ ERRO DO BACKEND", response._data);
@@ -421,23 +428,11 @@ watch(page, (newPage) => {
 watch(selectedCustomer, () => {
   // Quando trocar o cliente, voltar para página 1 e recarregar
   page.value = 1; // Não chamamos fetch novamente pois o filtro é local
+  fetchExpiredTickets();
 });
 
-watch(selectedCustomer, (newVal) => {
-  console.log("Filtro de cliente mudou:", newVal);
-
-  // Caso selecione "Todos os clientes"
-  if (!newVal || newVal === "Todos os clientes") {
-    selectedCustomer.value = null;
-    page.value = 1;
-    fetchExpiredTickets();
-    return;
-  }
-
-  // Aplicar filtro local por página atual
-  expiredTickets.value = expiredTickets.value.filter(
-    (ticket) => ticket.compania_nome === newVal,
-  );
+watch(selectedCustomer, (val) => {
+  console.log("VALOR DO selectedCustomer:", val, typeof val);
 });
 
 // -------------------------------
