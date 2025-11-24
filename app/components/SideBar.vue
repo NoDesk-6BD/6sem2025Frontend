@@ -122,6 +122,8 @@ const collapsed = useState("sidebar-collapsed");
 
 function handleLogout() {
   console.log("Logout clicado");
+  localStorage.removeItem("auth_token");
+  navigateTo("/login");
 }
 
 // --------------------------------------------------------

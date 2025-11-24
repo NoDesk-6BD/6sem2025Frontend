@@ -8,6 +8,14 @@
         Login
       </h1>
 
+      <!-- Mensagem de erro -->
+      <div
+        v-if="errorMessage"
+        class="mb-4 p-3 rounded-lg bg-red-100 text-red-700 border border-red-300 text-sm"
+      >
+        {{ errorMessage }}
+      </div>
+
       <form class="space-y-4" @submit.prevent="handleLogin">
         <div>
           <label class="block text-sm font-medium mb-1 text-blue-600"
@@ -54,9 +62,10 @@ definePageMeta({
 
 const email = ref("");
 const password = ref("");
+const errorMessage = ref("");
 
 function handleLogin() {
-  console.log("Realizando login:", email.value, password.value);
+  errorMessage.value = ""; // limpa erro antes de tentar
   Login(email.value, password.value);
 }
 
@@ -64,16 +73,22 @@ async function Login(email?: string, password?: string) {
   try {
     const response = await $fetch(`${config.public.apiBase}/auth/login`, {
       method: "POST",
-      body: { email: email, password: password },
+      body: { email, password },
     });
+
     if (response) {
       localStorage.setItem("auth_token", response.access_token);
       navigateTo("/dashboard");
-    } else {
-      console.log("Falha no login: Credenciais inválidas");
+      return;
     }
+
+    // Caso a API retorne 200 mas sem token
+    errorMessage.value = "Credenciais inválidas. Tente novamente.";
   } catch (err) {
     console.error("Erro ao realizar login:", err);
+
+    errorMessage.value = "Falha ao realizar login. Verifique suas credenciais.";
+    console.log("Erro ao realizar login:", err);
   }
 }
 </script>
