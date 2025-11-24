@@ -23,7 +23,6 @@
           searchable-placeholder="Buscar cliente..."
           value-attribute="value"
           label-attribute="label"
-          :transform="(item) => item.value"
         />
       </div>
     </div>
@@ -150,9 +149,16 @@
 
       <!-- Rodapé com Paginação -->
       <template #footer>
-        <div class="flex flex-wrap justify-center items-center gap-2 py-2">
-          <!-- Paginação centralizada -->
-          <div class="flex justify-center flex-grow p-4">
+        <div
+          class="flex flex-wrap justify-between items-center gap-4 py-2 px-4"
+        >
+          <!-- Total Geral ESQUERDA -->
+          <span class="text-sm font-medium text-gray-700">
+            Total geral: {{ formatNumber(totalExpiredGlobal) }}
+          </span>
+
+          <!-- Paginação CENTRALIZADA -->
+          <div class="flex justify-center flex-grow">
             <UPagination
               v-if="pageCount > 1"
               :key="paginationKey"
@@ -165,9 +171,9 @@
             />
           </div>
 
-          <!-- Total geral -->
-          <span class="text-sm font-medium text-gray-700">
-            Total geral: {{ formatNumber(totalExpiredGlobal) }}
+          <!-- Total filtrado DIREITA -->
+          <span class="text-sm font-medium text-blue-600">
+            Total filtrado: {{ formatNumber(totalFiltered) }}
           </span>
         </div>
       </template>
@@ -227,6 +233,7 @@ const expiredTickets = ref<ExpiredTicket[]>([]);
 const totalTickets = ref(0);
 const totalExpiredGlobal = ref(0);
 const paginationKey = ref(0);
+const totalFiltered = ref(0);
 
 // Paginação
 const page = ref(1);
@@ -361,20 +368,39 @@ async function fetchExpiredTickets() {
     limit: limit.value,
     page: page.value,
     offset: offset.value,
+    selectedCustomer: selectedCustomer.value,
   });
 
-  const companyParam =
-    selectedCustomer.value && typeof selectedCustomer.value === "object"
-      ? selectedCustomer.value.value
-      : (selectedCustomer.value ?? undefined);
+  // --- TIPAGEM CORRETA DOS PARAMETROS DA QUERY ---
+  interface TicketQueryParams {
+    limit: number;
+    offset: number;
+    company_id?: number;
+  }
+
+  // Monta parâmetros base
+  const params: TicketQueryParams = {
+    limit: limit.value,
+    offset: offset.value,
+  };
+
+  // Só envia company_id se for número válido
+  if (
+    selectedCustomer.value !== null &&
+    typeof selectedCustomer.value === "number"
+  ) {
+    params.company_id = selectedCustomer.value;
+  } else if (
+    selectedCustomer.value &&
+    typeof selectedCustomer.value === "object" &&
+    typeof selectedCustomer.value.value === "number"
+  ) {
+    params.company_id = selectedCustomer.value.value;
+  }
 
   try {
     const res = await $fetch<ExpiredTicketsResponse>(url, {
-      query: {
-        limit: limit.value,
-        offset: offset.value,
-        company_id: companyParam,
-      },
+      query: params,
       onResponseError({ response }) {
         console.error("❌ ERRO DO BACKEND", response._data);
       },
@@ -382,12 +408,21 @@ async function fetchExpiredTickets() {
 
     expiredTickets.value = res.items;
     totalTickets.value = res.total;
-  } catch (error) {
+
+    // Quando filtrado, total filtrado deve ser o total da resposta
+    if (selectedCustomer.value !== null) {
+      totalFiltered.value = res.total;
+    } else {
+      totalFiltered.value = 0;
+    }
+  } catch (error: unknown) {
     console.error("❌ ERRO AO BUSCAR TICKETS", error);
+
+    const err = error as { data?: { detail?: string } };
 
     toast.add({
       title: "Erro ao carregar tickets",
-      description: error?.data?.detail || "Falha inesperada.",
+      description: err?.data?.detail || "Falha inesperada.",
       color: "red",
       timeout: 8000,
     });
@@ -428,11 +463,8 @@ watch(page, (newPage) => {
 watch(selectedCustomer, () => {
   // Quando trocar o cliente, voltar para página 1 e recarregar
   page.value = 1; // Não chamamos fetch novamente pois o filtro é local
+  totalFiltered.value = 0; // reseta antes da nova busca
   fetchExpiredTickets();
-});
-
-watch(selectedCustomer, (val) => {
-  console.log("VALOR DO selectedCustomer:", val, typeof val);
 });
 
 // -------------------------------
