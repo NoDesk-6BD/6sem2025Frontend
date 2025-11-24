@@ -23,6 +23,8 @@
           searchable-placeholder="Buscar cliente..."
           value-attribute="value"
           label-attribute="label"
+          mode="single"
+          by="value"
         />
       </div>
     </div>
@@ -171,6 +173,21 @@
             />
           </div>
 
+          <!-- Botão CSV-->
+          <UButton
+            :loading="csvLoading"
+            :disabled="csvLoading"
+            icon="i-lucide-download"
+            color="gray"
+            variant="solid"
+            size="sm"
+            class="transition-colors duration-200 hover:bg-blue-600 hover:text-white"
+            @click="downloadCsv"
+          >
+            <span v-if="!csvLoading">Baixar CSV</span>
+            <span v-else>Gerando...</span>
+          </UButton>
+
           <!-- Total filtrado DIREITA -->
           <span class="text-sm font-medium text-blue-600">
             Total filtrado: {{ formatNumber(totalFiltered) }}
@@ -234,6 +251,7 @@ const totalTickets = ref(0);
 const totalExpiredGlobal = ref(0);
 const paginationKey = ref(0);
 const totalFiltered = ref(0);
+const csvLoading = ref(false);
 
 // Paginação
 const page = ref(1);
@@ -297,6 +315,100 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("pt-BR").format(value || 0);
 }
 
+function getCompanyId(
+  selectedCustomer: { label: string; value: number } | number | null,
+): number | undefined {
+  if (selectedCustomer === null) return undefined;
+  if (typeof selectedCustomer === "number") return selectedCustomer;
+  if (
+    typeof selectedCustomer === "object" &&
+    typeof selectedCustomer.value === "number"
+  )
+    return selectedCustomer.value;
+  return undefined;
+}
+
+// -------------------------------
+// API: Baixar CSV
+// -------------------------------
+async function downloadCsv() {
+  csvLoading.value = true;
+
+  try {
+    toast.add({ title: "Gerando CSV...", color: "blue" });
+
+    const allTickets: ExpiredTicket[] = [];
+    const pageSize = 200;
+    let offsetLocal = 0;
+
+    const total =
+      selectedCustomer.value !== null
+        ? totalFiltered.value
+        : totalExpiredGlobal.value;
+
+    const companyId = getCompanyId(selectedCustomer.value);
+
+    while (offsetLocal < total) {
+      const params: { limit: number; offset: number; company_id?: number } = {
+        limit: pageSize,
+        offset: offsetLocal,
+      };
+
+      if (companyId !== undefined) params.company_id = companyId;
+
+      const res = await $fetch<ExpiredTicketsResponse>(
+        `${config.public.apiBase}/dashboard/expired_tickets_list`,
+        { query: params },
+      );
+
+      allTickets.push(...res.items);
+      offsetLocal += pageSize;
+    }
+
+    // montar CSV
+    const header = [
+      "Data Abertura",
+      "Tempo Vencido (minutos)",
+      "Assunto",
+      "VIP",
+      "Cliente",
+    ].join(";");
+
+    const rows = allTickets
+      .map((t) =>
+        [
+          formatDate(t.data_criacao),
+          t.tempo_vencido_minutos,
+          `"${t.titulo.replace(/"/g, "'")}"`,
+          t.user_vip,
+          t.compania_nome,
+        ].join(";"),
+      )
+      .join("\n");
+
+    const csv = `${header}\n${rows}`;
+
+    // baixar
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download =
+      companyId !== undefined
+        ? `tickets_cliente.csv`
+        : `tickets_todos_clientes.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast.add({ title: "CSV baixado com sucesso!", color: "green" });
+  } catch (error) {
+    console.error("ERRO CSV:", error);
+    toast.add({ title: "Erro ao gerar CSV", color: "red" });
+  } finally {
+    csvLoading.value = false;
+  }
+}
+
 // -------------------------------
 // API: Busca Total Geral de Tickets Vencidos
 // -------------------------------
@@ -358,45 +470,15 @@ async function fetchCompanies() {
 // -------------------------------
 async function fetchExpiredTickets() {
   if (loadingTickets.value) return;
-
   loadingTickets.value = true;
 
   const url = `${config.public.apiBase}/dashboard/expired_tickets_list`;
 
-  console.log("🔍 CHAMADA API", {
-    url,
-    limit: limit.value,
-    page: page.value,
-    offset: offset.value,
-    selectedCustomer: selectedCustomer.value,
-  });
-
-  // --- TIPAGEM CORRETA DOS PARAMETROS DA QUERY ---
-  interface TicketQueryParams {
-    limit: number;
-    offset: number;
-    company_id?: number;
-  }
-
-  // Monta parâmetros base
-  const params: TicketQueryParams = {
+  const params: { limit: number; offset: number; company_id?: number } = {
     limit: limit.value,
     offset: offset.value,
+    company_id: getCompanyId(selectedCustomer.value),
   };
-
-  // Só envia company_id se for número válido
-  if (
-    selectedCustomer.value !== null &&
-    typeof selectedCustomer.value === "number"
-  ) {
-    params.company_id = selectedCustomer.value;
-  } else if (
-    selectedCustomer.value &&
-    typeof selectedCustomer.value === "object" &&
-    typeof selectedCustomer.value.value === "number"
-  ) {
-    params.company_id = selectedCustomer.value.value;
-  }
 
   try {
     const res = await $fetch<ExpiredTicketsResponse>(url, {
@@ -409,12 +491,7 @@ async function fetchExpiredTickets() {
     expiredTickets.value = res.items;
     totalTickets.value = res.total;
 
-    // Quando filtrado, total filtrado deve ser o total da resposta
-    if (selectedCustomer.value !== null) {
-      totalFiltered.value = res.total;
-    } else {
-      totalFiltered.value = 0;
-    }
+    totalFiltered.value = selectedCustomer.value !== null ? res.total : 0;
   } catch (error: unknown) {
     console.error("❌ ERRO AO BUSCAR TICKETS", error);
 
