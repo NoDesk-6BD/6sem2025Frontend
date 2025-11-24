@@ -1,26 +1,34 @@
 <!-- eslint-disable vue/html-self-closing -->
 <template>
-  <div class="flex items-center justify-center min-h-screen bg-gray-100">
-    <div class="w-full max-w-sm bg-white p-6 rounded-xl shadow-md">
-      <h1 class="text-2xl font-semibold text-center mb-6">Login</h1>
+  <div
+    class="flex items-center justify-center min-h-screen bg-gradient-to-t from-gray-300 to-blue-300"
+  >
+    <div class="w-full max-w-sm bg-white p-6 rounded-xl shadow-lg">
+      <h1 class="text-2xl font-semibold text-center mb-6 text-blue-600">
+        Login
+      </h1>
 
       <form class="space-y-4" @submit.prevent="handleLogin">
         <div>
-          <label class="block text-sm font-medium mb-1">Email</label>
+          <label class="block text-sm font-medium mb-1 text-blue-600"
+            >Email</label
+          >
           <input
             v-model="email"
             type="text"
-            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300"
+            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 text-blue-600"
             placeholder="Digite seu email"
           />
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-1">Senha</label>
+          <label class="block text-sm font-medium mb-1 text-blue-600"
+            >Senha</label
+          >
           <input
             v-model="password"
             type="password"
-            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300"
+            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 text-blue-600"
             placeholder="Digite sua senha"
           />
         </div>

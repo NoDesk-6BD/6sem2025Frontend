@@ -7,7 +7,7 @@ import type { TermsResponse } from "~/types/interfaces";
 const config = useRuntimeConfig();
 
 const props = defineProps<{
-  latest_terms: TermsResponse["latest_terms"];
+  latest_terms: TermsResponse;
   user_id: number;
 }>();
 
