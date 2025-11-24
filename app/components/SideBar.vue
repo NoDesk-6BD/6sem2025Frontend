@@ -37,7 +37,7 @@
         <!-- Link para o Dashboard Principal -->
         <li>
           <NuxtLink
-            to="/"
+            to="/dashboard"
             class="flex items-center gap-3 p-3 hover:bg-neutral-700 text-white rounded transition"
             :class="[collapsed ? 'justify-center' : '']"
             active-class="bg-neutral-700"
@@ -122,6 +122,8 @@ const collapsed = useState("sidebar-collapsed");
 
 function handleLogout() {
   console.log("Logout clicado");
+  localStorage.removeItem("auth_token");
+  navigateTo("/login");
 }
 
 // --------------------------------------------------------
