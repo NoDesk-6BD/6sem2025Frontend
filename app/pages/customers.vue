@@ -21,6 +21,10 @@
           class="w-64"
           searchable
           searchable-placeholder="Buscar cliente..."
+          value-attribute="value"
+          label-attribute="label"
+          mode="single"
+          by="value"
         />
       </div>
     </div>
@@ -147,9 +151,16 @@
 
       <!-- Rodapé com Paginação -->
       <template #footer>
-        <div class="flex flex-wrap justify-center items-center gap-2 py-2">
-          <!-- Paginação centralizada -->
-          <div class="flex justify-center flex-grow p-4">
+        <div
+          class="flex flex-wrap justify-between items-center gap-4 py-2 px-4"
+        >
+          <!-- Total Geral ESQUERDA -->
+          <span class="text-sm font-medium text-gray-700">
+            Total geral: {{ formatNumber(totalExpiredGlobal) }}
+          </span>
+
+          <!-- Paginação CENTRALIZADA -->
+          <div class="flex justify-center flex-grow">
             <UPagination
               v-if="pageCount > 1"
               :key="paginationKey"
@@ -162,9 +173,24 @@
             />
           </div>
 
-          <!-- Total geral -->
-          <span class="text-sm font-medium text-gray-700">
-            Total geral: {{ formatNumber(totalExpiredGlobal) }}
+          <!-- Botão CSV-->
+          <UButton
+            :loading="csvLoading"
+            :disabled="csvLoading"
+            icon="i-lucide-download"
+            color="gray"
+            variant="solid"
+            size="sm"
+            class="transition-colors duration-200 hover:bg-blue-600 hover:text-white"
+            @click="downloadCsv"
+          >
+            <span v-if="!csvLoading">Baixar CSV</span>
+            <span v-else>Gerando...</span>
+          </UButton>
+
+          <!-- Total filtrado DIREITA -->
+          <span class="text-sm font-medium text-blue-600">
+            Total filtrado: {{ formatNumber(totalFiltered) }}
           </span>
         </div>
       </template>
@@ -217,13 +243,15 @@ const chartTitleClass = "text-gray-500 font-medium text-xl";
 // ESTADOS
 // -------------------------------
 const loadingCustomers = ref(false);
-const selectedCustomer = ref<string | null>(null);
-const customerOptions = ref<string[]>([]);
+const selectedCustomer = ref<number | null>(null);
+const customerOptions = ref<{ label: string; value: number | null }[]>([]);
 const loadingTickets = ref(false);
 const expiredTickets = ref<ExpiredTicket[]>([]);
 const totalTickets = ref(0);
 const totalExpiredGlobal = ref(0);
 const paginationKey = ref(0);
+const totalFiltered = ref(0);
+const csvLoading = ref(false);
 
 // Paginação
 const page = ref(1);
@@ -237,12 +265,7 @@ const pageCount = computed(() => {
 });
 
 // Filtra tickets pelo cliente selecionado
-const filteredTickets = computed(() => {
-  if (!selectedCustomer.value) return expiredTickets.value;
-  return expiredTickets.value.filter(
-    (t) => t.compania_nome === selectedCustomer.value,
-  );
-});
+const filteredTickets = computed(() => expiredTickets.value);
 
 // -------------------------------
 // INTERFACES
@@ -292,6 +315,100 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("pt-BR").format(value || 0);
 }
 
+function getCompanyId(
+  selectedCustomer: { label: string; value: number } | number | null,
+): number | undefined {
+  if (selectedCustomer === null) return undefined;
+  if (typeof selectedCustomer === "number") return selectedCustomer;
+  if (
+    typeof selectedCustomer === "object" &&
+    typeof selectedCustomer.value === "number"
+  )
+    return selectedCustomer.value;
+  return undefined;
+}
+
+// -------------------------------
+// API: Baixar CSV
+// -------------------------------
+async function downloadCsv() {
+  csvLoading.value = true;
+
+  try {
+    toast.add({ title: "Gerando CSV...", color: "blue" });
+
+    const allTickets: ExpiredTicket[] = [];
+    const pageSize = 200;
+    let offsetLocal = 0;
+
+    const total =
+      selectedCustomer.value !== null
+        ? totalFiltered.value
+        : totalExpiredGlobal.value;
+
+    const companyId = getCompanyId(selectedCustomer.value);
+
+    while (offsetLocal < total) {
+      const params: { limit: number; offset: number; company_id?: number } = {
+        limit: pageSize,
+        offset: offsetLocal,
+      };
+
+      if (companyId !== undefined) params.company_id = companyId;
+
+      const res = await $fetch<ExpiredTicketsResponse>(
+        `${config.public.apiBase}/dashboard/expired_tickets_list`,
+        { query: params },
+      );
+
+      allTickets.push(...res.items);
+      offsetLocal += pageSize;
+    }
+
+    // montar CSV
+    const header = [
+      "Data Abertura",
+      "Tempo Vencido (minutos)",
+      "Assunto",
+      "VIP",
+      "Cliente",
+    ].join(";");
+
+    const rows = allTickets
+      .map((t) =>
+        [
+          formatDate(t.data_criacao),
+          t.tempo_vencido_minutos,
+          `"${t.titulo.replace(/"/g, "'")}"`,
+          t.user_vip,
+          t.compania_nome,
+        ].join(";"),
+      )
+      .join("\n");
+
+    const csv = `${header}\n${rows}`;
+
+    // baixar
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download =
+      companyId !== undefined
+        ? `tickets_cliente.csv`
+        : `tickets_todos_clientes.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast.add({ title: "CSV baixado com sucesso!", color: "green" });
+  } catch (error) {
+    console.error("ERRO CSV:", error);
+    toast.add({ title: "Erro ao gerar CSV", color: "red" });
+  } finally {
+    csvLoading.value = false;
+  }
+}
+
 // -------------------------------
 // API: Busca Total Geral de Tickets Vencidos
 // -------------------------------
@@ -328,8 +445,11 @@ async function fetchCompanies() {
 
     if (Array.isArray(res.companies)) {
       customerOptions.value = [
-        "Todos os clientes",
-        ...res.companies.map((c) => c.name).sort(),
+        { label: "Todos os clientes", value: null },
+        ...res.companies.map((c) => ({
+          label: c.name,
+          value: c.company_id,
+        })),
       ];
     } else {
       throw new Error("Formato inválido na resposta de companies.");
@@ -350,24 +470,19 @@ async function fetchCompanies() {
 // -------------------------------
 async function fetchExpiredTickets() {
   if (loadingTickets.value) return;
-
   loadingTickets.value = true;
 
   const url = `${config.public.apiBase}/dashboard/expired_tickets_list`;
 
-  console.log("🔍 CHAMADA API", {
-    url,
+  const params: { limit: number; offset: number; company_id?: number } = {
     limit: limit.value,
-    page: page.value,
     offset: offset.value,
-  });
+    company_id: getCompanyId(selectedCustomer.value),
+  };
 
   try {
     const res = await $fetch<ExpiredTicketsResponse>(url, {
-      query: {
-        limit: limit.value,
-        offset: offset.value,
-      },
+      query: params,
       onResponseError({ response }) {
         console.error("❌ ERRO DO BACKEND", response._data);
       },
@@ -375,12 +490,16 @@ async function fetchExpiredTickets() {
 
     expiredTickets.value = res.items;
     totalTickets.value = res.total;
-  } catch (error) {
+
+    totalFiltered.value = selectedCustomer.value !== null ? res.total : 0;
+  } catch (error: unknown) {
     console.error("❌ ERRO AO BUSCAR TICKETS", error);
+
+    const err = error as { data?: { detail?: string } };
 
     toast.add({
       title: "Erro ao carregar tickets",
-      description: error?.data?.detail || "Falha inesperada.",
+      description: err?.data?.detail || "Falha inesperada.",
       color: "red",
       timeout: 8000,
     });
@@ -421,23 +540,8 @@ watch(page, (newPage) => {
 watch(selectedCustomer, () => {
   // Quando trocar o cliente, voltar para página 1 e recarregar
   page.value = 1; // Não chamamos fetch novamente pois o filtro é local
-});
-
-watch(selectedCustomer, (newVal) => {
-  console.log("Filtro de cliente mudou:", newVal);
-
-  // Caso selecione "Todos os clientes"
-  if (!newVal || newVal === "Todos os clientes") {
-    selectedCustomer.value = null;
-    page.value = 1;
-    fetchExpiredTickets();
-    return;
-  }
-
-  // Aplicar filtro local por página atual
-  expiredTickets.value = expiredTickets.value.filter(
-    (ticket) => ticket.compania_nome === newVal,
-  );
+  totalFiltered.value = 0; // reseta antes da nova busca
+  fetchExpiredTickets();
 });
 
 // -------------------------------
