@@ -1,12 +1,36 @@
 <!-- components/TermsModal.vue -->
 <script setup lang="ts">
-import type { TermsResponse } from "~/types/interfaces"; // se tiver tipado
+import { useRuntimeConfig } from "#app";
 
-defineProps<{
+import type { TermsResponse } from "~/types/interfaces";
+
+const config = useRuntimeConfig();
+
+const props = defineProps<{
   latest_terms: TermsResponse["latest_terms"];
+  user_id: number;
 }>();
 
 const emit = defineEmits<{ close: [boolean] }>();
+
+async function AcceptTerms() {
+  try {
+    await $fetch(`${config.public.apiBase}/terms/accept`, {
+      method: "POST",
+      body: { user_id: props.user_id },
+    });
+
+    emit("close", true);
+  } catch (err) {
+    console.error("Erro ao aceitar termos:", err);
+    emit("close", false);
+  }
+}
+
+async function DeclineTerms() {
+  emit("close", false);
+  navigateTo("/login");
+}
 </script>
 
 <template>
@@ -21,12 +45,9 @@ const emit = defineEmits<{ close: [boolean] }>();
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <UButton
-          label="Recusar"
-          color="neutral"
-          @click="emit('close', false)"
-        />
-        <UButton label="Aceitar" color="primary" @click="emit('close', true)" />
+        <UButton label="Recusar" color="neutral" @click="DeclineTerms" />
+
+        <UButton label="Aceitar" color="primary" @click="AcceptTerms()" />
       </div>
     </template>
   </UModal>
