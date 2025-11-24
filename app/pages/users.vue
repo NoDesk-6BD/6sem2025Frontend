@@ -250,6 +250,19 @@
         <div
           class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700"
         >
+          <!-- BOTÃO DELETAR (somente edição) -->
+          <UButton
+            v-if="isEditing"
+            type="button"
+            label="Deletar"
+            icon="i-lucide-trash-2"
+            :disabled="!isEditing"
+            class="bg-gray-300 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-600 hover:text-white active:bg-red-700 transition-colors duration-200"
+            variant="solid"
+            @click="deleteUser"
+          />
+
+          <!-- BOTÃO CANCELAR RESET -->
           <UButton
             type="button"
             label="Cancelar"
@@ -259,6 +272,7 @@
             @click="resetForm"
           />
 
+          <!-- BOTÃO SALVAR/CADASTRAR -->
           <UButton
             type="submit"
             :label="isEditing ? 'Atualizar Usuário' : 'Salvar Usuário'"
@@ -350,6 +364,44 @@ async function fetchUsers() {
     console.error("Erro ao buscar usuários para pesquisa", err);
   } finally {
     loadingUsers.value = false;
+  }
+}
+
+// --- DELETAR USUÁRIO ---
+async function deleteUser() {
+  if (!editingId.value) return;
+
+  // 🔒 Bloqueia exclusão se a conta estiver ativa
+  if (!form.is_inactive) {
+    toast.add({
+      title: "Este usuário ainda está ATIVO.",
+      color: "yellow",
+      icon: "i-lucide-alert-triangle",
+    });
+    return;
+  }
+
+  try {
+    await $fetch(`${config.public.apiBase}/users/${editingId.value}`, {
+      method: "DELETE",
+    });
+
+    toast.add({
+      title: "Conta Desativada DELETADA da Base de Dados",
+      color: "red",
+      icon: "i-lucide-trash-2",
+    });
+
+    resetForm();
+    fetchUsers();
+  } catch (err) {
+    console.error("Erro ao deletar usuário", err);
+    toast.add({
+      title: "Erro ao deletar usuário",
+      description: "Tente novamente.",
+      color: "red",
+      icon: "i-lucide-alert-circle",
+    });
   }
 }
 
