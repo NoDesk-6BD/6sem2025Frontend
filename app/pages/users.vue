@@ -1,5 +1,4 @@
 <template>
-  <!-- app/pages/users.vue -->
   <div class="flex flex-col p-6 main-content">
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2"
@@ -7,11 +6,88 @@
       <h1 class="text-2xl font-bold">Usuários do sistema</h1>
     </div>
 
-    <!-- <UCard class="max-w-3xl mx-auto w-full"> Removido -->
-    <UCard class="w-full">
+    <UCard
+      class="w-full mb-6 relative z-50"
+      :ui="{ base: 'overflow-visible', body: { base: 'overflow-visible p-4' } }"
+      style="overflow: visible"
+    >
+      <template #header>
+        <h2 class="text-lg font-medium text-gray-700 dark:text-gray-200">
+          Pesquisar Usuário
+        </h2>
+      </template>
+
+      <div class="relative">
+        <UInput
+          v-model="searchQuery"
+          icon="i-lucide-search"
+          placeholder="Digite parte do nome para buscar..."
+          class="w-full mb-2"
+          :loading="loadingUsers"
+          autocomplete="off"
+        />
+
+        <div
+          v-if="searchQuery && filteredUsers.length > 0"
+          class="absolute top-full left-0 z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-b-md shadow-2xl max-h-60 overflow-y-auto"
+        >
+          <ul>
+            <li
+              v-for="user in filteredUsers"
+              :key="user.id"
+              class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors duration-150"
+              @click="selectUserToEdit(user)"
+            >
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ user.full_name }}
+                  </p>
+                  <p class="text-xs text-gray-500">
+                    {{ user.email }} • {{ formatCpf(user.cpf) }}
+                  </p>
+                </div>
+                <UBadge
+                  :color="user.role === 'admin' ? 'red' : 'primary'"
+                  variant="subtle"
+                  size="xs"
+                >
+                  {{ user.role }}
+                </UBadge>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div
+          v-else-if="searchQuery && filteredUsers.length === 0"
+          class="absolute z-[100] w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-4 mt-1 text-center text-gray-500"
+        >
+          Nenhum usuário encontrado com "{{ searchQuery }}"
+        </div>
+      </div>
+    </UCard>
+
+    <UCard class="w-full mb-6 relative z-0">
       <form class="space-y-6" @submit.prevent="onSubmit">
+        <div
+          class="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-gray-700 mb-4"
+        >
+          <h2 class="text-lg font-medium text-gray-700 dark:text-gray-200">
+            {{ isEditing ? "Editando Usuário" : "Novo Cadastro" }}
+          </h2>
+          <UButton
+            v-if="isEditing"
+            icon="i-lucide-plus"
+            size="xs"
+            color="gray"
+            variant="ghost"
+            label="Voltar para Novo Cadastro"
+            @click="resetForm"
+          />
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- NOME -->
           <UFormField name="full_name" required :error="errors.full_name">
             <template #label>
               <div
@@ -30,7 +106,6 @@
             />
           </UFormField>
 
-          <!-- EMAIL -->
           <UFormField name="email" required :error="errors.email">
             <template #label>
               <div
@@ -50,7 +125,6 @@
             />
           </UFormField>
 
-          <!-- CPF -->
           <UFormField name="cpf" required :error="errors.cpf">
             <template #label>
               <div
@@ -70,8 +144,7 @@
             />
           </UFormField>
 
-          <!-- TELEFONE -->
-          <UFormField name="phone" required :error="errors.phone">
+          <UFormField name="phone" :error="errors.phone">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
@@ -90,7 +163,6 @@
             />
           </UFormField>
 
-          <!-- PERFIL DE ACESSO -->
           <UFormField name="role" required :error="errors.role">
             <template #label>
               <div
@@ -111,17 +183,26 @@
             />
           </UFormField>
 
-          <!-- VIP -->
-          <div class="flex items-center pt-8">
+          <div class="flex items-center pt-8 gap-20">
             <UCheckbox
               v-model="form.vip"
               name="vip"
               label="Usuário VIP"
               help="Habilita acesso prioritário"
             />
+
+            <UCheckbox
+              v-model="form.is_inactive"
+              name="is_inactive"
+              label="Desativar Conta"
+              help="Bloqueia o acesso do usuário ao sistema"
+              :disabled="!isEditing"
+              :ui="{
+                label: isEditing ? 'text-red-600 font-bold' : 'text-gray-400',
+              }"
+            />
           </div>
 
-          <!-- SENHA -->
           <UFormField name="password" required :error="errors.password">
             <template #label>
               <div
@@ -134,13 +215,14 @@
             <UInput
               v-model="form.password"
               type="password"
-              placeholder="Mínimo 8 caracteres"
+              :placeholder="
+                isEditing ? 'Mínimo 8 caracteres' : 'Mínimo 8 caracteres'
+              "
               class="w-full"
               @input="errors.password = undefined"
             />
           </UFormField>
 
-          <!-- CONFIRMAR SENHA -->
           <UFormField
             name="password_confirm"
             required
@@ -164,7 +246,7 @@
           </UFormField>
         </div>
 
-        <!-- BOTÕES-->
+        <!-- BOTÕES DE AÇÃO -->
         <div
           class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700"
         >
@@ -173,13 +255,13 @@
             label="Cancelar"
             variant="ghost"
             color="gray"
-            class="bg-gray-200 text-gray-700 hover:bg-red-100 hover:text-red-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors duration-200"
+            class="bg-gray-200 text-gray-700 hover:bg-yellow-100 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-yello-900/30 dark:hover:text-gray-400 transition-colors duration-200"
             @click="resetForm"
           />
 
           <UButton
             type="submit"
-            label="Salvar Usuário"
+            :label="isEditing ? 'Atualizar Usuário' : 'Salvar Usuário'"
             color="primary"
             :loading="isLoading"
             icon="i-lucide-save"
@@ -191,12 +273,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
-import { useRuntimeConfig, useToast } from "#imports"; // 'navigateTo' removido pois não era usado
+import { ref, reactive, onMounted, computed } from "vue";
+import { useRuntimeConfig, useToast } from "#imports";
 
 const config = useRuntimeConfig();
 const toast = useToast();
 const isLoading = ref(false);
+
+// --- TIPAGEM ---
+interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  phone?: string | null;
+  cpf: string;
+  role: string;
+  vip: boolean;
+  active: boolean;
+  created_at?: string;
+}
+
+// --- ESTADO DE PESQUISA ---
+const searchQuery = ref("");
+const usersList = ref<User[]>([]);
+const loadingUsers = ref(false);
+const isEditing = ref(false); // Controla se estamos em modo edição
+const editingId = ref<number | null>(null); // Guarda o ID do usuário sendo editado
+
+// --- COMPUTED: FILTRAR USUÁRIOS ---
+const filteredUsers = computed(() => {
+  if (!searchQuery.value) return [];
+  const term = searchQuery.value.toUpperCase();
+  return usersList.value.filter((u) =>
+    u.full_name.toUpperCase().includes(term),
+  );
+});
 
 // Opções de Roles (Perfis)
 const roles = ref([
@@ -214,6 +325,7 @@ const form = reactive({
   phone: "",
   cpf: "",
   vip: false,
+  is_inactive: false,
   role: undefined as string | undefined,
 });
 
@@ -228,9 +340,56 @@ const errors = reactive({
   role: undefined as string | undefined,
 });
 
+// --- API: BUSCAR USUÁRIOS ---
+async function fetchUsers() {
+  loadingUsers.value = true;
+  try {
+    const data = await $fetch<User[]>(`${config.public.apiBase}/users/`);
+    usersList.value = data || [];
+  } catch (err) {
+    console.error("Erro ao buscar usuários para pesquisa", err);
+  } finally {
+    loadingUsers.value = false;
+  }
+}
+
+// --- SELECIONAR USUÁRIO DA LISTA (PREENCHER FORM) ---
+function selectUserToEdit(user: User) {
+  isEditing.value = true;
+  editingId.value = user.id;
+
+  // Preenche o formulário
+  form.full_name = user.full_name;
+  form.email = user.email;
+  // Formata visualmente o CPF e Telefone se necessário
+  handleCpfInput(user.cpf);
+  if (user.phone) handlePhoneInput(user.phone);
+
+  form.role = user.role;
+  form.vip = user.vip;
+
+  // TRATATIVA DO STATUS:
+  // Se user.active == true, então is_inactive = false (Não marcar checkbox)
+  // Se user.active == false, então is_inactive = true (Marcar checkbox)
+  form.is_inactive = !user.active;
+
+  // Limpa campos de senha (não vêm da API por segurança)
+  form.password = "";
+  form.password_confirm = "";
+
+  // Limpa a busca para fechar a lista
+  searchQuery.value = "";
+
+  toast.add({
+    title: "Modo de Edição",
+    description: `Carregados dados de ${user.full_name}`,
+    color: "blue",
+    icon: "i-lucide-pencil",
+  });
+}
+
 // --- FUNÇÃO DE LIMPEZA ---
 function resetForm() {
-  // 1. Limpa os valores
   form.email = "";
   form.password = "";
   form.password_confirm = "";
@@ -238,7 +397,13 @@ function resetForm() {
   form.phone = "";
   form.cpf = "";
   form.vip = false;
+  form.is_inactive = false;
   form.role = undefined;
+
+  // Reseta estados de edição
+  isEditing.value = false;
+  editingId.value = null;
+  searchQuery.value = "";
 
   // 2. Limpa os erros visuais
   Object.keys(errors).forEach((key) => {
@@ -274,6 +439,12 @@ function handleCpfInput(value: string) {
   errors.cpf = undefined; // Limpa erro ao digitar
 }
 
+// Helper apenas para visualização na lista (sem alterar o model)
+function formatCpf(value: string) {
+  if (!value) return "";
+  return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
 function handlePhoneInput(value: string) {
   if (!value) {
     form.phone = "";
@@ -289,32 +460,6 @@ function handlePhoneInput(value: string) {
   form.phone = v;
   errors.phone = undefined; // Limpa erro ao digitar
 }
-
-/* --- FUNÇÃO AUXILIAR DE VALIDAÇÃO DE CPF ---
-function isValidCPF(cpf: string): boolean {
-  if (typeof cpf !== 'string') return false
-
-  // Remove caracteres não numéricos
-  cpf = cpf.replace(/[^\d]+/g, '')
-
-  // Verifica se tem 11 dígitos ou se são todos iguais (ex: 111.111.111-11 é inválido mas passa no cálculo)
-  if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false
-
-  // Validação do 1º Dígito Verificador
-  const cpfArray = cpf.split('').map(el => +el)
-  let rest = cpfArray.slice(0, 9).reduce((soma, el, index) => soma + el * (10 - index), 0)
-  rest = (rest * 10) % 11
-  if (rest === 10 || rest === 11) rest = 0
-  if (rest !== cpfArray[9]) return false
-
-  // Validação do 2º Dígito Verificador
-  rest = cpfArray.slice(0, 10).reduce((soma, el, index) => soma + el * (11 - index), 0)
-  rest = (rest * 10) % 11
-  if (rest === 10 || rest === 11) rest = 0
-  if (rest !== cpfArray[10]) return false
-
-  return true
-} */
 
 // --- VALIDAÇÃO ---
 function validateForm() {
@@ -335,17 +480,6 @@ function validateForm() {
     isValid = false;
   }
 
-  /* // 3. CPF (Agora com validação matemática)
-  const cpfClean = form.cpf.replace(/\D/g, '')
-  if (!cpfClean || cpfClean.length !== 11) {
-    errors.cpf = 'Informe somente números (11 dígitos necessários)'
-    isValid = false
-  } else if (!isValidCPF(cpfClean)) {
-    // Nova validação aqui!
-    errors.cpf = 'CPF inválido (Verifique os dígitos)'
-    isValid = false
-  } */
-
   // 3. CPF
   const cpfClean = form.cpf.replace(/\D/g, "");
   if (!cpfClean || cpfClean.length !== 11) {
@@ -354,25 +488,40 @@ function validateForm() {
     isValid = false;
   }
 
-  // 4. Telefone
+  // 4. Telefone (AGORA OPCIONAL)
+  // Valida apenas se o usuário digitou algo
   const phoneClean = form.phone.replace(/\D/g, "");
-  if (!phoneClean || phoneClean.length < 10) {
-    errors.phone = "Informe somente números (com DDD)";
+  if (phoneClean.length > 0 && phoneClean.length < 10) {
+    errors.phone = "Se informado, use DDD + Número";
     isValid = false;
   }
 
-  // 5. Senha, Tamanho e Confirmação Senha.
-  if (!form.password || form.password.length < 8) {
-    errors.password = "Digite no mínimo 8 caracteres";
-    isValid = false;
+  // 5. Senha
+  if (!isEditing.value) {
+    // Novo Cadastro: Senha obrigatória
+    if (!form.password || form.password.length < 8) {
+      errors.password = "Senha obrigatória (min 8 chars).";
+      isValid = false;
+    }
+    if (form.password !== form.password_confirm) {
+      errors.password_confirm = "As senhas não conferem.";
+      isValid = false;
+    }
+  } else {
+    // Edição: Senha opcional (valida apenas se preenchida)
+    if (form.password.length > 0) {
+      if (form.password.length < 8) {
+        errors.password = "Mínimo 8 caracteres.";
+        isValid = false;
+      }
+      if (form.password !== form.password_confirm) {
+        errors.password_confirm = "As senhas não conferem.";
+        isValid = false;
+      }
+    }
   }
 
-  if (form.password !== form.password_confirm) {
-    errors.password_confirm = "As senhas não conferem";
-    isValid = false;
-  }
-
-  // 7. Role ID
+  // 6. Role ID
   if (!form.role) {
     errors.role = "Selecione um perfil de acesso";
     isValid = false;
@@ -382,11 +531,9 @@ function validateForm() {
 }
 
 // --- SUBMIT ---
-
 async function onSubmit() {
   // Executa validação antes de qualquer coisa
   if (!validateForm()) {
-    // Opcional: Toast genérico avisando para corrigir os campos vermelhos
     toast.add({
       title: "Atenção",
       description: "Verifique os campos em vermelho.",
@@ -399,71 +546,71 @@ async function onSubmit() {
   isLoading.value = true;
 
   try {
-    // 2. Prepara o payload (remove formatações)
-    const payload = {
+    // Correção lint: Tipagem do payload ao invés de 'any'
+    const payload: Record<string, unknown> = {
       full_name: form.full_name,
       email: form.email,
-      password: form.password,
       vip: form.vip,
       cpf: form.cpf.replace(/\D/g, ""),
       phone: form.phone.replace(/\D/g, ""),
       role: form.role,
     };
+    if (form.password) {
+      payload.password = form.password;
+    }
 
-    // 3. Envia para a API
-    await $fetch(`${config.public.apiBase}/users/`, {
-      method: "POST",
+    let url = `${config.public.apiBase}/users/`;
+    let method: "POST" | "PUT" = "POST";
+    let successMsg = "Usuário cadastrado.";
+
+    if (isEditing.value && editingId.value) {
+      url = `${config.public.apiBase}/users/${editingId.value}`;
+      method = "PUT";
+      successMsg = "Dados atualizados.";
+      payload.active = !form.is_inactive;
+    }
+
+    await $fetch(url, {
+      method: method,
       body: payload,
     });
 
-    toast.add({
-      title: "Sucesso!",
-      description: "Usuário cadastrado corretamente.",
-      color: "green",
-      icon: "i-lucide-check-circle",
-    });
+    toast.add({ title: "Sucesso!", description: successMsg, color: "green" });
 
     resetForm();
+    fetchUsers();
   } catch (err: unknown) {
-    // Tipagem segura de erro
+    // Correção lint: Uso de ApiError ao invés de any
     const error = err as ApiError;
-
-    // CORREÇÃO: Usando a variável 'error' para garantir que ela não seja marcada como "unused"
-    console.error("Erro detalhado:", error);
-
-    let messageDetalhada = "Erro desconhecido";
-
-    if (error.data) {
-      if (Array.isArray(error.data.detail)) {
-        messageDetalhada = error.data.detail
-          .map((e: { loc: string[]; msg: string }) => {
-            const campo = e.loc ? e.loc[e.loc.length - 1] : "";
-            return campo ? `${campo}: ${e.msg}` : e.msg;
-          })
-          .join(" | ");
-      } else if (error.data.detail && typeof error.data.detail === "string") {
-        messageDetalhada = error.data.detail;
-      } else if (error.data.message) {
-        messageDetalhada = error.data.message;
-      }
+    console.error("Erro API:", error);
+    let msg = "Erro desconhecido";
+    if (error.data?.detail) {
+      msg = Array.isArray(error.data.detail)
+        ? error.data.detail[0].msg
+        : (error.data.detail as string);
     } else if (error.message) {
-      if (error.statusCode === 422) {
-        messageDetalhada =
-          "Dados inválidos ou já existentes (Verifique CPF/Email)";
-      } else {
-        messageDetalhada = error.message;
-      }
+      msg = error.message;
     }
 
-    toast.add({
-      title: "Falha ao salvar",
-      description: messageDetalhada,
-      color: "red",
-      icon: "i-lucide-x-circle",
-      timeout: 6000,
-    });
+    const lowerMsg = msg.toLowerCase();
+    if (lowerMsg.includes("cpf")) {
+      const ptMsg = "Este CPF já está cadastrado.";
+      errors.cpf = ptMsg;
+      msg = ptMsg;
+    }
+    if (lowerMsg.includes("email")) {
+      const ptMsg = "Este e-mail já está em uso.";
+      errors.email = ptMsg;
+      msg = ptMsg;
+    }
+    toast.add({ title: "Erro ao salvar", description: msg, color: "red" });
   } finally {
     isLoading.value = false;
   }
 }
+
+// Carregar lista ao entrar na tela
+onMounted(() => {
+  fetchUsers();
+});
 </script>
