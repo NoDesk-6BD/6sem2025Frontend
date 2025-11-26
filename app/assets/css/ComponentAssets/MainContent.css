@@ -1,36 +1,5 @@
 /* app/assets/css/ComponentAssets/MainContent.css */
-/* Define a regra de 4 colunas para os cards, um grid e 2x2 para os gráficos, o que impede a responsividades.
-Comentar todas as regras. Ele não é mais necessário, pois o index.vue já cuida de tudo
-
-.metrics-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  height: 10vh;
-  gap: var(--card_gap);
-  margin-bottom: 20px;
-}
-
-.metrics-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  height: auto;
-  padding: 10px;
-}
-
-.metrics-card-value {
-  font-size: 2em;
-}
-
-.metrics-card-title {
-  font-weight: bold;
-}
-
-/* Região dos gráficos
-
+/* Região dos gráficos */
 .dash-boards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -49,5 +18,3 @@ Comentar todas as regras. Ele não é mais necessário, pois o index.vue já cui
   border-radius: 8px;
   padding: 10px;
 }
-
-*/

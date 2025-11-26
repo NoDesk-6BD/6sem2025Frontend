@@ -1,5 +1,5 @@
-// app/components/MainContent.vue
 <template>
+  <!-- app/components/MainContent.vue -->
   <UContainer class="main-content">
     <div class="metrics-cards">
       <MetricsCard titulo-metrica="Metrica 1" :valor-metrica="1" />

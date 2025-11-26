@@ -1,4 +1,8 @@
-// app/components/LineChart.vue
+<template>
+  <!-- app/components/LineChart.vue -->
+  <Line :data="data" :options="options" />
+</template>
+
 <script setup lang="ts">
 import { Line } from "vue-chartjs";
 import type { ChartData, ChartOptions } from "chart.js";
@@ -8,7 +12,3 @@ defineProps<{
   options?: ChartOptions<"line">;
 }>();
 </script>
-
-<template>
-  <Line :data="data" :options="options" />
-</template>

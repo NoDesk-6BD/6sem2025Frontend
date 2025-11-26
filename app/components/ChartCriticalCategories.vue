@@ -1,5 +1,5 @@
-// app/components/ChartCriticalCategories.vue
 <template>
+  <!-- app/components/ChartCriticalCategories.vue -->
   <div>
     <client-only>
       <DoughnutChart :data="props.chartData" :options="chartOptions" />
@@ -24,21 +24,37 @@ const chartOptions = ref<ChartOptions<"doughnut">>({
     legend: {
       position: "right",
       labels: {
-        boxWidth: 35,
-        padding: 20,
+        boxWidth: 15,
+        padding: 15,
+        font: {
+          size: 12,
+        },
       },
     },
     title: {
       display: false,
     },
-    // CORREÇÃO: Adiciona a configuração para os rótulos de dados (datalabels)
-    datalabels: {
-      color: "#ffffff", // Define a cor do texto para branco
-      font: {
-        weight: "bold", // Deixa o texto em negrito para melhor leitura
-        size: 14,
+    // Configuração do Tooltip (Caixa flutuante ao passar o mouse)
+    tooltip: {
+      enabled: true,
+      callbacks: {
+        label: function (context) {
+          const label = context.label || "";
+          const value = context.raw as number;
+          // Formata o número para pt-BR (ex: 10.227)
+          const formattedValue = value.toLocaleString("pt-BR");
+          return ` ${label}: ${formattedValue}`;
+        },
       },
-      // Formata o número para o padrão brasileiro (com pontos como separadores de milhar)
+    },
+    // Configuração dos Rótulos de Dados (Texto fixo no gráfico)
+    datalabels: {
+      display: true, // Deixei falso para focar na legenda/tooltip, mude para true se quiser números em cima das fatias
+      color: "#ffffff",
+      font: {
+        weight: "bold",
+        size: 12,
+      },
       formatter: (value: number) => {
         return value.toLocaleString("pt-BR");
       },
