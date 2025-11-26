@@ -78,10 +78,6 @@ import type {
   TicketsByCategory,
 } from "~/types/interfaces";
 
-//definePageMeta({
-//  middleware: "root-redirect",
-//});
-
 const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 const dashNameList = [
@@ -160,16 +156,6 @@ async function fetchMetricsCard(
   } catch (error) {
     console.error("Erro ao buscar métricas:", error);
     return null;
-  }
-}
-
-async function checkUserAcceptance(user_id: number) {
-  try {
-    return await $fetch(
-      `${config.public.apiBase}/terms/check_user_acceptance?user_id=${user_id}`,
-    );
-  } catch (err) {
-    console.error("Erro:", err);
   }
 }
 
@@ -387,27 +373,27 @@ const _formatLabel = (str: string, maxLength: number): string[] => {
 
 const overlay = useOverlay();
 
+const { checkUserAcceptance } = useTerms();
+
 onMounted(async () => {
   const result = await checkUserAcceptance(1);
-  console.log("checkUserAcceptance result:", result);
+
   if (!result.accepted) {
     const modal = overlay.create(TermsModal);
 
     const instance = modal.open({
-      latest_terms: result.latest_terms,
+      userId: 1,
     });
 
     const accepted = await instance.result;
 
     if (accepted) {
-      // chamar sua API salvando o aceite
-      await acceptTerms(result.latest_terms.id);
+      console.log("Termos aceitos pelo usuário.");
       reloadDashboard();
     }
   } else {
     reloadDashboard();
   }
-  reloadDashboard();
 });
 
 function reloadDashboard() {

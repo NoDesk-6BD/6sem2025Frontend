@@ -1,23 +1,35 @@
 <!-- components/TermsModal.vue -->
 <script setup lang="ts">
 import { useRuntimeConfig } from "#app";
-
+import TermBlock from "~/components/TermBlock.vue";
 import type { TermsResponse } from "~/types/interfaces";
 
 const config = useRuntimeConfig();
 
 const props = defineProps<{
-  latest_terms: TermsResponse;
-  user_id: number;
+  userId: number;
 }>();
 
 const emit = defineEmits<{ close: [boolean] }>();
+
+const requiredTerms: TermsResponse = await $fetch(
+  `${config.public.apiBase}/terms/required`,
+  {
+    method: "GET",
+  },
+);
+
+onBeforeMount(() => {
+  if (!props.userId) {
+    throw new Error("O user_id é obrigatório para TermsModal");
+  }
+});
 
 async function AcceptTerms() {
   try {
     await $fetch(`${config.public.apiBase}/terms/accept`, {
       method: "POST",
-      body: { user_id: props.user_id },
+      body: { user_id: props.userId, term_id: props.required.id },
     });
 
     emit("close", true);
@@ -39,9 +51,9 @@ async function DeclineTerms() {
       <h2 class="text-xl font-bold">Termos de Uso</h2>
     </template>
 
-    <p class="whitespace-pre-line">
-      {{ latest_terms.content }}
-    </p>
+    <template #body>
+      <TermBlock :term-content="requiredTerms.content" :is-required="true" />
+    </template>
 
     <template #footer>
       <div class="flex justify-end gap-2">
