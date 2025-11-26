@@ -50,3 +50,8 @@ export interface TermsResponse {
   type: TermsType;
   created_at: Date;
 }
+
+export interface UserTermsAcceptance {
+  accepted: boolean;
+  latest_terms: TermsResponse;
+}

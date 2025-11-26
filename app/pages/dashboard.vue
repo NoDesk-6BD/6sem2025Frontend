@@ -71,7 +71,6 @@ import ChartCriticalCategories from "~/components/ChartCriticalCategories.vue";
 import TimeFilter from "~/components/TimeFilter.vue";
 // import CustomLegend from "~/components/CustomLegend.vue";
 import MetricsCard from "~/components/MetricsCard.vue";
-import TermsModal from "~/components/TermsModal.vue";
 import type {
   MetricsCardResponse,
   CriticalProjectsResponse,
@@ -371,28 +370,14 @@ const _formatLabel = (str: string, maxLength: number): string[] => {
   return lines;
 };
 
-const overlay = useOverlay();
-
 const { checkUserAcceptance } = useTerms();
 
 onMounted(async () => {
-  const result = await checkUserAcceptance(1);
-
-  if (!result.accepted) {
-    const modal = overlay.create(TermsModal);
-
-    const instance = modal.open({
-      userId: 1,
-    });
-
-    const accepted = await instance.result;
-
-    if (accepted) {
-      console.log("Termos aceitos pelo usuário.");
-      reloadDashboard();
-    }
-  } else {
+  const UserAcceptance = await checkUserAcceptance();
+  if (UserAcceptance) {
     reloadDashboard();
+  } else {
+    navigateTo("/login");
   }
 });
 

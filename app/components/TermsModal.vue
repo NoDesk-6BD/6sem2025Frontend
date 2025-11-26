@@ -22,6 +22,8 @@ const requiredTerms: TermsResponse = await $fetch(
 onBeforeMount(() => {
   if (!props.userId) {
     throw new Error("O user_id é obrigatório para TermsModal");
+  } else {
+    console.log("User ID recebido em TermsModal:", props.userId);
   }
 });
 
@@ -29,7 +31,7 @@ async function AcceptTerms() {
   try {
     await $fetch(`${config.public.apiBase}/terms/accept`, {
       method: "POST",
-      body: { user_id: props.userId, term_id: props.required.id },
+      body: { user_id: props.userId, terms_id: requiredTerms.id },
     });
 
     emit("close", true);
@@ -41,7 +43,6 @@ async function AcceptTerms() {
 
 async function DeclineTerms() {
   emit("close", false);
-  navigateTo("/login");
 }
 </script>
 
