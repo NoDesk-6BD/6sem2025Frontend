@@ -662,7 +662,14 @@ async function onSubmit() {
 }
 
 // Carregar lista ao entrar na tela
-onMounted(() => {
-  fetchUsers();
+const { checkUserAcceptance } = useTerms();
+
+onMounted(async () => {
+  const UserAcceptance = await checkUserAcceptance();
+  if (UserAcceptance) {
+    fetchUsers();
+  } else {
+    navigateTo("/login");
+  }
 });
 </script>

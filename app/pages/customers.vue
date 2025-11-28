@@ -547,11 +547,22 @@ watch(selectedCustomer, () => {
 // -------------------------------
 // LIFECYCLE
 // -------------------------------
-onMounted(() => {
+
+const { checkUserAcceptance } = useTerms();
+onMounted(async () => {
+  const UserAcceptance = await checkUserAcceptance();
+  if (UserAcceptance) {
+    fetchContentData();
+  } else {
+    navigateTo("/login");
+  }
+});
+
+function fetchContentData() {
   fetchTotalExpiredGlobal();
   fetchCompanies();
   fetchExpiredTickets();
-});
+}
 
 // -------------------------------
 // MOCKS PARA DASHBOARDS

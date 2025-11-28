@@ -78,6 +78,8 @@ async function Login(email?: string, password?: string) {
 
     if (response) {
       localStorage.setItem("auth_token", response.access_token);
+      localStorage.setItem("user_id", "1");
+
       navigateTo("/dashboard");
       return;
     }
