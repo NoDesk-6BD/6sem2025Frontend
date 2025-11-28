@@ -75,7 +75,9 @@ function DeclineTerms() {
 <template>
   <UModal :close="{ onClick: () => emit('close', false) }">
     <template #header>
-      <h2 class="text-xl font-bold">Termos de Uso</h2>
+      <h2 class="text-xl font-bold">
+        Termo de uso de dados – Uso da Plataforma
+      </h2>
     </template>
 
     <template #body>
