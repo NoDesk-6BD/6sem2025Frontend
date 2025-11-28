@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
+  <div class="grid grid-cols-7 gap-2 mb-2">
     <!-- Slider -->
     <div
       class="slider-wrapper d-flex flex-column max-w-9"
@@ -9,9 +9,9 @@
     </div>
 
     <!-- Conteúdo -->
-    <div class="flex-grow-1">
+    <div class="flex-grow-1 col-span-6">
       <textarea
-        class="form-control bg-dark text-light border p-3"
+        class="form-control bg-dark text-light border p-3 w-full h-50 rounded"
         rows="10"
         readonly
         :value="termContent"
@@ -21,6 +21,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+
 const emit = defineEmits<{
   (e: "changeValue", payload: { accepted: boolean; termId: number }): void;
 }>();

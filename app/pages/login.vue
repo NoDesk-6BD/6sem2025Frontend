@@ -78,7 +78,9 @@ async function Login(email?: string, password?: string) {
 
     if (response) {
       localStorage.setItem("auth_token", response.access_token);
-      localStorage.setItem("user_id", "1");
+      localStorage.setItem("user_id", response.user_id);
+
+      await fetchLatestTerms();
 
       navigateTo("/dashboard");
       return;
@@ -91,6 +93,38 @@ async function Login(email?: string, password?: string) {
 
     errorMessage.value = "Falha ao realizar login. Verifique suas credenciais.";
     console.log("Erro ao realizar login:", err);
+  }
+}
+
+async function postBaseTerm() {
+  const baseTerm = {
+    version: "1",
+    content:
+      "Ao utilizar esta plataforma, você concorda que seus dados pessoais serão coletados, armazenados e processados conforme descrito neste termo. Seus dados serão utilizados exclusivamente para melhorar sua experiência na plataforma e para fins administrativos. Não compartilharemos suas informações com terceiros sem o seu consentimento explícito, exceto quando exigido por lei. Você tem o direito de acessar, corrigir ou excluir seus dados a qualquer momento, entrando em contato conosco. Ao continuar a usar a plataforma, você reconhece que leu e concorda com este termo de uso de dados.",
+    type: "required",
+  };
+
+  $fetch<{ name: string; count: number }[]>(
+    `${config.public.apiBase}/terms/new`,
+    {
+      method: "POST",
+      body: baseTerm,
+    },
+  );
+}
+
+async function fetchLatestTerms() {
+  try {
+    await $fetch<{ name: string; count: number }[]>(
+      `${config.public.apiBase}/terms/latest`,
+      { method: "GET" },
+    );
+  } catch (error) {
+    if (error.status === 404) {
+      await postBaseTerm();
+    } else {
+      console.error("Erro ao buscar termos:", error);
+    }
   }
 }
 </script>
