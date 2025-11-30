@@ -88,13 +88,14 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <UFormField name="full_name" required :error="errors.full_name">
+          <UFormField name="full_name" :error="errors.full_name">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-user" class="w-4 h-4" />
                 <span>Nome Completo:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -106,13 +107,14 @@
             />
           </UFormField>
 
-          <UFormField name="email" required :error="errors.email">
+          <UFormField name="email" :error="errors.email">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-mail" class="w-4 h-4" />
                 <span>E-mail:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -125,13 +127,14 @@
             />
           </UFormField>
 
-          <UFormField name="cpf" required :error="errors.cpf">
+          <UFormField name="cpf" :error="errors.cpf">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-file-badge" class="w-4 h-4" />
                 <span>CPF:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -163,13 +166,14 @@
             />
           </UFormField>
 
-          <UFormField name="role" required :error="errors.role">
+          <UFormField name="role" :error="errors.role">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-shield" class="w-4 h-4" />
                 <span>Perfil de Acesso:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <USelect
@@ -203,13 +207,14 @@
             />
           </div>
 
-          <UFormField name="password" required :error="errors.password">
+          <UFormField name="password" :error="errors.password">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-lock" class="w-4 h-4" />
                 <span>Senha:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -223,17 +228,14 @@
             />
           </UFormField>
 
-          <UFormField
-            name="password_confirm"
-            required
-            :error="errors.password_confirm"
-          >
+          <UFormField name="password_confirm" :error="errors.password_confirm">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-lock-keyhole" class="w-4 h-4" />
                 <span>Confirmar Senha:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -305,6 +307,14 @@ interface User {
   vip: boolean;
   active: boolean;
   created_at?: string;
+}
+
+// Interface para erro da API
+interface ApiError {
+  data?: {
+    detail?: string | { msg: string }[];
+  };
+  message?: string;
 }
 
 // --- ESTADO DE PESQUISA ---
