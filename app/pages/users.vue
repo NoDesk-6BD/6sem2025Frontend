@@ -1,4 +1,5 @@
 <template>
+  <!-- app/pages/users.vue -->
   <div class="flex flex-col p-6 main-content">
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2"
@@ -7,7 +8,7 @@
     </div>
 
     <UCard
-      class="w-full mb-6 relative z-50"
+      class="w-full mb-6 relative z-20"
       :ui="{ base: 'overflow-visible', body: { base: 'overflow-visible p-4' } }"
       style="overflow: visible"
     >
@@ -29,7 +30,7 @@
 
         <div
           v-if="searchQuery && filteredUsers.length > 0"
-          class="absolute top-full left-0 z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-b-md shadow-2xl max-h-60 overflow-y-auto"
+          class="absolute top-full left-0 z-30 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-b-md shadow-2xl max-h-60 overflow-y-auto"
         >
           <ul>
             <li
@@ -61,14 +62,14 @@
 
         <div
           v-else-if="searchQuery && filteredUsers.length === 0"
-          class="absolute z-[100] w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-4 mt-1 text-center text-gray-500"
+          class="absolute z-30 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-4 mt-1 text-center text-gray-500"
         >
           Nenhum usuário encontrado com "{{ searchQuery }}"
         </div>
       </div>
     </UCard>
 
-    <UCard class="w-full mb-6 relative z-0">
+    <UCard class="w-full mb-6 relative z-10">
       <form class="space-y-6" @submit.prevent="onSubmit">
         <div
           class="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-gray-700 mb-4"
@@ -256,12 +257,12 @@
           <UButton
             v-if="isEditing"
             type="button"
-            label="Deletar"
+            label="Excluir"
             icon="i-lucide-trash-2"
             :disabled="!isEditing"
             class="bg-gray-300 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-600 hover:text-white active:bg-red-700 transition-colors duration-200"
             variant="solid"
-            @click="deleteUser"
+            @click="handleDeleteClick"
           />
 
           <!-- BOTÃO CANCELAR RESET -->
@@ -285,16 +286,76 @@
         </div>
       </form>
     </UCard>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+    <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+    >
+      <div
+        class="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200 dark:border-gray-800"
+      >
+        <div
+          class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-800"
+        >
+          <UIcon
+            name="i-lucide-alert-triangle"
+            class="w-7 h-7 text-red-600 dark:text-red-500"
+          />
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+            Atenção!
+          </h3>
+        </div>
+
+        <div class="px-6 py-6">
+          <p class="text-gray-700 dark:text-gray-300 text-base">
+            Tem certeza que deseja deletar a conta de
+            <strong class="text-black dark:text-white text-lg">{{
+              form.full_name
+            }}</strong
+            >?
+            <br >
+            <br >
+            <span
+              class="text-red-600 font-bold bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded"
+            >
+              Esta ação não poderá ser desfeita!
+            </span>
+          </p>
+        </div>
+
+        <div
+          class="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-800/50"
+        >
+          <UButton
+            label="Não"
+            color="gray"
+            variant="ghost"
+            @click="showDeleteModal = false"
+          />
+          <UButton
+            label="Sim"
+            color="red"
+            variant="solid"
+            icon="i-lucide-trash-2"
+            :loading="isLoading"
+            @click="deleteUser"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
 import { useRuntimeConfig, useToast } from "#imports";
+//import DeleteUserModal from "~/components/DeleteUserModal.vue";
 
 const config = useRuntimeConfig();
 const toast = useToast();
 const isLoading = ref(false);
+const showDeleteModal = ref(false);
 
 // --- TIPAGEM ---
 interface User {
@@ -377,41 +438,82 @@ async function fetchUsers() {
   }
 }
 
-// --- DELETAR USUÁRIO ---
+// ----------------------------------------------------
+// VERIFICAÇÃO DE STATUS (Botão Excluir)
+// ----------------------------------------------------
+async function handleDeleteClick() {
+  console.log("Clicou em Excluir");
+  if (!isEditing.value || !editingId.value) return;
+
+  isLoading.value = true;
+
+  try {
+    const userCheck = await $fetch<User>(
+      `${config.public.apiBase}/users/${editingId.value}`,
+    );
+    console.log("Status do usuário:", userCheck.active);
+    // Se Ativo (true) -> BLOQUEIA
+    if (userCheck.active === true) {
+      toast.add({
+        title: "Exclusão Bloqueada",
+        description:
+          "Esta conta ainda está ativa. Edite, salve como 'Desativar Conta' e tente novamente.",
+        color: "yellow",
+        icon: "i-lucide-alert-triangle",
+        timeout: 8000,
+      });
+      return; // Retorna sem abrir modal
+    }
+
+    // Se chegou aqui, active = false -> abre modal
+    console.log("Usuário inativo, abrindo modal...");
+    showDeleteModal.value = true;
+  } catch (err) {
+    console.error("Erro na verificação", err);
+    toast.add({
+      title: "Erro",
+      description: "Falha ao verificar status.",
+      color: "red",
+    });
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// ----------------------------------------------------
+// DELETAR (Chamado pelo Modal)
+// ----------------------------------------------------
 async function deleteUser() {
   if (!editingId.value) return;
 
-  // 🔒 Bloqueia exclusão se a conta estiver ativa
-  if (!form.is_inactive) {
-    toast.add({
-      title: "Este usuário ainda está ATIVO.",
-      color: "yellow",
-      icon: "i-lucide-alert-triangle",
-    });
-    return;
-  }
-
+  isLoading.value = true;
   try {
     await $fetch(`${config.public.apiBase}/users/${editingId.value}`, {
       method: "DELETE",
     });
 
     toast.add({
-      title: "Conta Desativada DELETADA da Base de Dados",
-      color: "red",
+      title: "Conta Deletada",
+      description: "O registro foi removido definitivamente do banco de dados.",
+      color: "green",
       icon: "i-lucide-trash-2",
     });
 
+    showDeleteModal.value = false;
     resetForm();
     fetchUsers();
-  } catch (err) {
-    console.error("Erro ao deletar usuário", err);
-    toast.add({
-      title: "Erro ao deletar usuário",
-      description: "Tente novamente.",
-      color: "red",
-      icon: "i-lucide-alert-circle",
-    });
+  } catch (err: unknown) {
+    const error = err as ApiError;
+    console.error("Erro ao excluir:", error);
+    let msg = "Não foi possível excluir a conta.";
+    if (error.data?.detail) {
+      msg = Array.isArray(error.data.detail)
+        ? error.data.detail[0].msg
+        : (error.data.detail as string);
+    }
+    toast.add({ title: "Erro", description: msg, color: "red" });
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -441,6 +543,7 @@ function selectUserToEdit(user: User) {
 
   // Limpa a busca para fechar a lista
   searchQuery.value = "";
+  showDeleteModal.value = false;
 
   toast.add({
     title: "Modo de Edição",
@@ -466,6 +569,7 @@ function resetForm() {
   isEditing.value = false;
   editingId.value = null;
   searchQuery.value = "";
+  showDeleteModal.value = false;
 
   // 2. Limpa os erros visuais
   Object.keys(errors).forEach((key) => {
