@@ -103,6 +103,7 @@
             <UInput
               :model-value="form.full_name"
               placeholder="DIGITE O NOME COMPLETO"
+              class="w-full"
               :disabled="!isAdmin"
               :ui="{
                 base: !isAdmin
