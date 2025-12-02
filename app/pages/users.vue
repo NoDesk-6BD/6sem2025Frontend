@@ -45,7 +45,8 @@
                     {{ user.full_name }}
                   </p>
                   <p class="text-xs text-gray-500">
-                    {{ user.email }} • {{ formatCpf(user.cpf) }}
+                    {{ user.email }}
+                    <span v-if="isAdmin"> • {{ formatCpf(user.cpf) }}</span>
                   </p>
                 </div>
                 <UBadge
@@ -96,26 +97,35 @@
               >
                 <UIcon name="i-lucide-user" class="w-4 h-4" />
                 <span>Nome Completo:</span>
-                <span class="text-red-500">*</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
               :model-value="form.full_name"
               placeholder="DIGITE O NOME COMPLETO"
-              class="w-full"
+              :disabled="!isAdmin"
+              :ui="{
+                base: !isAdmin
+                  ? 'opacity-70 cursor-not-allowed bg-gray-50'
+                  : '',
+              }"
               @update:model-value="handleNameInput"
               @input="errors.full_name = undefined"
             />
           </UFormField>
 
-          <UFormField name="email" :error="errors.email">
+          <UFormField
+            v-if="currentUserRole === 'admin'"
+            name="email"
+            :error="errors.email"
+          >
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-mail" class="w-4 h-4" />
                 <span>E-mail:</span>
-                <span class="text-red-500">*</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -123,12 +133,18 @@
               type="email"
               placeholder="user@example.com"
               class="w-full"
+              :disabled="!isAdmin"
+              :ui="{
+                base: !isAdmin
+                  ? 'opacity-70 cursor-not-allowed bg-gray-50'
+                  : '',
+              }"
               @update:model-value="handleEmailInput"
               @input="errors.email = undefined"
             />
           </UFormField>
 
-          <UFormField name="cpf" :error="errors.cpf">
+          <UFormField v-if="isAdmin" name="cpf" :error="errors.cpf">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
@@ -148,7 +164,7 @@
             />
           </UFormField>
 
-          <UFormField name="phone" :error="errors.phone">
+          <UFormField v-if="isAdmin" name="phone" :error="errors.phone">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
@@ -167,7 +183,7 @@
             />
           </UFormField>
 
-          <UFormField name="role" :error="errors.role">
+          <UFormField v-if="isAdmin" name="role" :error="errors.role">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
@@ -194,6 +210,7 @@
               name="vip"
               label="Usuário VIP"
               help="Habilita acesso prioritário"
+              :disabled="!isAdmin"
             />
 
             <UCheckbox
@@ -215,7 +232,7 @@
               >
                 <UIcon name="i-lucide-lock" class="w-4 h-4" />
                 <span>Senha:</span>
-                <span class="text-red-500">*</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -236,7 +253,7 @@
               >
                 <UIcon name="i-lucide-lock-keyhole" class="w-4 h-4" />
                 <span>Confirmar Senha:</span>
-                <span class="text-red-500">*</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -255,7 +272,7 @@
         >
           <!-- BOTÃO DELETAR (somente edição) -->
           <UButton
-            v-if="isEditing"
+            v-if="isEditing && isAdmin"
             type="button"
             label="Excluir"
             icon="i-lucide-trash-2"
@@ -357,6 +374,12 @@ const toast = useToast();
 const isLoading = ref(false);
 const showDeleteModal = ref(false);
 
+// Estado da ROLE do usuário logado
+const currentUserRole = ref("");
+
+// Helper para verificar se é Admin
+const isAdmin = computed(() => currentUserRole.value === "admin");
+
 // --- TIPAGEM ---
 interface User {
   id: number;
@@ -389,9 +412,16 @@ const editingId = ref<number | null>(null); // Guarda o ID do usuário sendo edi
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return [];
   const term = searchQuery.value.toUpperCase();
-  return usersList.value.filter((u) =>
-    u.full_name.toUpperCase().includes(term),
-  );
+  return usersList.value.filter((u) => {
+    // PROTEÇÃO: Garante que full_name existe antes de tentar converter
+    // Se u.full_name for null/undefined, usa string vazia para não quebrar
+    const name = u.full_name ? u.full_name.toUpperCase() : "";
+
+    // Opcional: Permitir buscar por email também
+    const email = u.email ? u.email.toUpperCase() : "";
+
+    return name.includes(term) || email.includes(term);
+  });
 });
 
 // Opções de Roles (Perfis)
@@ -606,9 +636,11 @@ function handleCpfInput(value: string) {
 }
 
 // Helper apenas para visualização na lista (sem alterar o model)
-function formatCpf(value: string) {
+function formatCpf(value: string | number | null | undefined) {
   if (!value) return "";
-  return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  // Converte forçadamente para string para garantir que o .replace funcione
+  const strValue = String(value).replace(/\D/g, "");
+  return strValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 }
 
 function handlePhoneInput(value: string) {
@@ -634,35 +666,44 @@ function validateForm() {
     (key) => (errors[key as keyof typeof errors] = undefined),
   );
 
-  // 1. Nome
+  // 1. Nome, obrigatório para todos
   if (!form.full_name || form.full_name.length < 3) {
     errors.full_name = "O nome deve ter no mínimo 3 caracteres.";
     isValid = false;
   }
 
-  // 2. Email (Regra pedida)
-  if (!form.email || !form.email.includes("@") || !form.email.includes(".")) {
-    errors.email = "Informe um e-mail válido, exemplo: usuário@dominio.com";
-    isValid = false;
-  }
+  // Validação de campos restritos: Só valida se o usuário for ADMIN
+  // Se for AGENT, os campos não aparecem, então não devem ser validados no front (o back cuida se mantiver o valor antigo)
 
-  // 3. CPF
-  const cpfClean = form.cpf.replace(/\D/g, "");
-  if (!cpfClean || cpfClean.length !== 11) {
-    // Texto solicitado + aviso de tamanho
-    errors.cpf = "Informe somente números (11 dígitos necessários)";
-    isValid = false;
-  }
+  if (currentUserRole.value === "admin") {
+    // 2. Email (Regra pedida)
+    if (!form.email || !form.email.includes("@") || !form.email.includes(".")) {
+      errors.email = "Informe um e-mail válido, exemplo: usuário@dominio.com";
+      isValid = false;
+    }
 
-  // 4. Telefone (AGORA OPCIONAL)
-  // Valida apenas se o usuário digitou algo
+    // 3. CPF
+    const cpfClean = form.cpf.replace(/\D/g, "");
+    if (!cpfClean || cpfClean.length !== 11) {
+      // Texto solicitado + aviso de tamanho
+      errors.cpf = "Informe somente números (11 dígitos necessários)";
+      isValid = false;
+    }
+
+    // 4. Role é obrigatório se for admin
+    if (!form.role) {
+      errors.role = "Selecione um perfil de acesso";
+      isValid = false;
+    }
+  }
+  // 5. Telefone (AGORA OPCIONAL), Valida apenas se o usuário digitou algo
   const phoneClean = form.phone.replace(/\D/g, "");
   if (phoneClean.length > 0 && phoneClean.length < 10) {
     errors.phone = "Se informado, use DDD + Número";
     isValid = false;
   }
 
-  // 5. Senha
+  // 6. Senha
   if (!isEditing.value) {
     // Novo Cadastro: Senha obrigatória
     if (!form.password || form.password.length < 8) {
@@ -687,12 +728,6 @@ function validateForm() {
     }
   }
 
-  // 6. Role ID
-  if (!form.role) {
-    errors.role = "Selecione um perfil de acesso";
-    isValid = false;
-  }
-
   return isValid;
 }
 
@@ -715,6 +750,7 @@ async function onSubmit() {
     // Correção lint: Tipagem do payload ao invés de 'any'
     const payload: Record<string, unknown> = {
       full_name: form.full_name,
+      // Envia os outros campos mesmo que ocultos (pois estão no 'form' reativo preenchido no selectUser)
       email: form.email,
       vip: form.vip,
       cpf: form.cpf.replace(/\D/g, ""),
@@ -779,6 +815,8 @@ async function onSubmit() {
 const { checkUserAcceptance } = useTerms();
 
 onMounted(async () => {
+  // Pega a role do usuário no mount
+  currentUserRole.value = localStorage.getItem("user_role") || "viewer";
   const UserAcceptance = await checkUserAcceptance();
   if (UserAcceptance) {
     fetchUsers();
