@@ -368,6 +368,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
 import { useRuntimeConfig, useToast } from "#imports";
+import emailjs from "@emailjs/browser";
 //import DeleteUserModal from "~/components/DeleteUserModal.vue";
 
 const config = useRuntimeConfig();
@@ -380,6 +381,11 @@ const currentUserRole = ref("");
 
 // Helper para verificar se é Admin
 const isAdmin = computed(() => currentUserRole.value === "admin");
+
+// --- LÊ VARIÁVEIS DO NUXT.CONFIG (que lê do .env) ---
+const EMAILJS_SERVICE_ID = config.public.emailjsServiceId as string;
+const EMAILJS_TEMPLATE_ID = config.public.emailjsTemplateId as string;
+const EMAILJS_PUBLIC_KEY = config.public.emailjsPublicKey as string;
 
 // --- TIPAGEM ---
 interface User {
@@ -455,6 +461,58 @@ const errors = reactive({
   cpf: undefined as string | undefined,
   role: undefined as string | undefined,
 });
+
+// --- FUNÇÃO DE ENVIO DE EMAIL (FRONTEND) ---
+async function sendWelcomeEmail(userData: {
+  name: string;
+  email: string;
+  password?: string;
+}) {
+  // Verifica se as chaves existem antes de tentar enviar
+  if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
+    console.warn("EmailJS: Chaves não configuradas no .env");
+    return;
+  }
+
+  if (!userData.email) return;
+
+  // Parâmetros que serão enviados para o template
+  // Certifique-se que no painel do EmailJS o campo 'To' está como {{to_email}}
+  const templateParams = {
+    to_name: userData.name,
+    to_email: userData.email,
+    senha: userData.password || "Senha padrão ou definida pelo admin",
+    link_plataforma: window.location.origin + "/login",
+  };
+
+  try {
+    const response = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      templateParams,
+      EMAILJS_PUBLIC_KEY,
+    );
+    console.log(
+      "✅ Email enviado com sucesso!",
+      response.status,
+      response.text,
+    );
+
+    toast.add({
+      title: "E-mail enviado!",
+      description: `Convite com senha enviado para ${userData.email}`,
+      color: "blue",
+      icon: "i-lucide-mail",
+    });
+  } catch (error: unknown) {
+    console.error("❌ Falha no EmailJS:", error);
+    toast.add({
+      title: "Falha no envio de e-mail",
+      description: "Usuário criado, mas o e-mail falhou (verifique console).",
+      color: "orange",
+    });
+  }
+}
 
 // --- API: BUSCAR USUÁRIOS ---
 async function fetchUsers() {
@@ -765,6 +823,7 @@ async function onSubmit() {
     let url = `${config.public.apiBase}/users/`;
     let method: "POST" | "PUT" = "POST";
     let successMsg = "Usuário cadastrado.";
+    const isNewUser = !isEditing.value; // Flag para saber se é novo
 
     if (isEditing.value && editingId.value) {
       url = `${config.public.apiBase}/users/${editingId.value}`;
@@ -779,6 +838,15 @@ async function onSubmit() {
     });
 
     toast.add({ title: "Sucesso!", description: successMsg, color: "green" });
+
+    // Se for novo usuário, envia e-mail de boas-vindas
+    if (isNewUser) {
+      await sendWelcomeEmail({
+        name: form.full_name,
+        email: form.email,
+        password: form.password, // Passando a senha para o e-mail
+      });
+    }
 
     resetForm();
     fetchUsers();
