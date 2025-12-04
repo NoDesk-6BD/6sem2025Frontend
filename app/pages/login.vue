@@ -1,5 +1,6 @@
 <!-- eslint-disable vue/html-self-closing -->
 <template>
+  <!-- app/pages/login.vue -->
   <div
     class="flex items-center justify-center min-h-screen bg-gradient-to-t from-gray-300 to-blue-300"
   >
@@ -64,6 +65,16 @@ const email = ref("");
 const password = ref("");
 const errorMessage = ref("");
 
+// Interface para tipar a resposta do Login
+interface LoginResponse {
+  user_id: number;
+  name: string;
+  email: string;
+  role: string;
+  access_token: string;
+  token_type: string;
+}
+
 function handleLogin() {
   errorMessage.value = ""; // limpa erro antes de tentar
   Login(email.value, password.value);
@@ -71,18 +82,31 @@ function handleLogin() {
 
 async function Login(email?: string, password?: string) {
   try {
-    const response = await $fetch(`${config.public.apiBase}/auth/login`, {
-      method: "POST",
-      body: { email, password },
-    });
+    const response = await $fetch<LoginResponse>(
+      `${config.public.apiBase}/auth/login`,
+      {
+        method: "POST",
+        body: { email, password },
+      },
+    );
 
-    if (response) {
+    if (response && response.access_token) {
+      // 1. Salva Token e ID
       localStorage.setItem("auth_token", response.access_token);
-      localStorage.setItem("user_id", response.user_id);
+      localStorage.setItem("user_id", response.user_id.toString());
+
+      // 2. Salva Nome e Role para uso na Sidebar e Permissões
+      localStorage.setItem("user_name", response.name);
+      localStorage.setItem("user_role", response.role);
+
+      // 2. Salva no Cookie (para o Middleware funcionar no reload/server-side)
+      // PADRONIZAÇÃO: auth_token
+      const tokenCookie = useCookie("auth_token");
+      tokenCookie.value = response.access_token;
 
       await fetchLatestTerms();
-
       navigateTo("/dashboard");
+
       return;
     }
 

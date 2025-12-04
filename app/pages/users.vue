@@ -1,4 +1,5 @@
 <template>
+  <!-- app/pages/users.vue -->
   <div class="flex flex-col p-6 main-content">
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2"
@@ -7,7 +8,7 @@
     </div>
 
     <UCard
-      class="w-full mb-6 relative z-50"
+      class="w-full mb-6 relative z-20"
       :ui="{ base: 'overflow-visible', body: { base: 'overflow-visible p-4' } }"
       style="overflow: visible"
     >
@@ -29,7 +30,7 @@
 
         <div
           v-if="searchQuery && filteredUsers.length > 0"
-          class="absolute top-full left-0 z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-b-md shadow-2xl max-h-60 overflow-y-auto"
+          class="absolute top-full left-0 z-30 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-b-md shadow-2xl max-h-60 overflow-y-auto"
         >
           <ul>
             <li
@@ -44,7 +45,8 @@
                     {{ user.full_name }}
                   </p>
                   <p class="text-xs text-gray-500">
-                    {{ user.email }} • {{ formatCpf(user.cpf) }}
+                    {{ user.email }}
+                    <span v-if="isAdmin"> • {{ formatCpf(user.cpf) }}</span>
                   </p>
                 </div>
                 <UBadge
@@ -61,14 +63,14 @@
 
         <div
           v-else-if="searchQuery && filteredUsers.length === 0"
-          class="absolute z-[100] w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-4 mt-1 text-center text-gray-500"
+          class="absolute z-30 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-4 mt-1 text-center text-gray-500"
         >
           Nenhum usuário encontrado com "{{ searchQuery }}"
         </div>
       </div>
     </UCard>
 
-    <UCard class="w-full mb-6 relative z-0">
+    <UCard class="w-full mb-6 relative z-10">
       <form class="space-y-6" @submit.prevent="onSubmit">
         <div
           class="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-gray-700 mb-4"
@@ -88,31 +90,43 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <UFormField name="full_name" required :error="errors.full_name">
+          <UFormField name="full_name" :error="errors.full_name">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-user" class="w-4 h-4" />
                 <span>Nome Completo:</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
               :model-value="form.full_name"
               placeholder="DIGITE O NOME COMPLETO"
               class="w-full"
+              :disabled="!isAdmin"
+              :ui="{
+                base: !isAdmin
+                  ? 'opacity-70 cursor-not-allowed bg-gray-50'
+                  : '',
+              }"
               @update:model-value="handleNameInput"
               @input="errors.full_name = undefined"
             />
           </UFormField>
 
-          <UFormField name="email" required :error="errors.email">
+          <UFormField
+            v-if="currentUserRole === 'admin'"
+            name="email"
+            :error="errors.email"
+          >
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-mail" class="w-4 h-4" />
                 <span>E-mail:</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -120,18 +134,25 @@
               type="email"
               placeholder="user@example.com"
               class="w-full"
+              :disabled="!isAdmin"
+              :ui="{
+                base: !isAdmin
+                  ? 'opacity-70 cursor-not-allowed bg-gray-50'
+                  : '',
+              }"
               @update:model-value="handleEmailInput"
               @input="errors.email = undefined"
             />
           </UFormField>
 
-          <UFormField name="cpf" required :error="errors.cpf">
+          <UFormField v-if="isAdmin" name="cpf" :error="errors.cpf">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-file-badge" class="w-4 h-4" />
                 <span>CPF:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -144,7 +165,7 @@
             />
           </UFormField>
 
-          <UFormField name="phone" :error="errors.phone">
+          <UFormField v-if="isAdmin" name="phone" :error="errors.phone">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
@@ -163,13 +184,14 @@
             />
           </UFormField>
 
-          <UFormField name="role" required :error="errors.role">
+          <UFormField v-if="isAdmin" name="role" :error="errors.role">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-shield" class="w-4 h-4" />
                 <span>Perfil de Acesso:</span>
+                <span class="text-red-500">*</span>
               </div>
             </template>
             <USelect
@@ -189,6 +211,7 @@
               name="vip"
               label="Usuário VIP"
               help="Habilita acesso prioritário"
+              :disabled="!isAdmin"
             />
 
             <UCheckbox
@@ -203,13 +226,14 @@
             />
           </div>
 
-          <UFormField name="password" required :error="errors.password">
+          <UFormField name="password" :error="errors.password">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-lock" class="w-4 h-4" />
                 <span>Senha:</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -223,17 +247,14 @@
             />
           </UFormField>
 
-          <UFormField
-            name="password_confirm"
-            required
-            :error="errors.password_confirm"
-          >
+          <UFormField name="password_confirm" :error="errors.password_confirm">
             <template #label>
               <div
                 class="flex items-center gap-1.5 mb-1 text-gray-700 dark:text-gray-200 font-medium"
               >
                 <UIcon name="i-lucide-lock-keyhole" class="w-4 h-4" />
                 <span>Confirmar Senha:</span>
+                <span v-if="isAdmin" class="text-red-500">*</span>
               </div>
             </template>
             <UInput
@@ -252,14 +273,14 @@
         >
           <!-- BOTÃO DELETAR (somente edição) -->
           <UButton
-            v-if="isEditing"
+            v-if="isEditing && isAdmin"
             type="button"
-            label="Deletar"
+            label="Excluir"
             icon="i-lucide-trash-2"
             :disabled="!isEditing"
             class="bg-gray-300 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-600 hover:text-white active:bg-red-700 transition-colors duration-200"
             variant="solid"
-            @click="deleteUser"
+            @click="handleDeleteClick"
           />
 
           <!-- BOTÃO CANCELAR RESET -->
@@ -283,16 +304,88 @@
         </div>
       </form>
     </UCard>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+    <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+    >
+      <div
+        class="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200 dark:border-gray-800"
+      >
+        <div
+          class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-800"
+        >
+          <UIcon
+            name="i-lucide-alert-triangle"
+            class="w-7 h-7 text-red-600 dark:text-red-500"
+          />
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+            Atenção!
+          </h3>
+        </div>
+
+        <div class="px-6 py-6">
+          <p class="text-gray-700 dark:text-gray-300 text-base">
+            Tem certeza que deseja deletar a conta de
+            <strong class="text-black dark:text-white text-lg">{{
+              form.full_name
+            }}</strong
+            >?
+            <br >
+            <br >
+            <span
+              class="text-red-600 font-bold bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded"
+            >
+              Esta ação não poderá ser desfeita!
+            </span>
+          </p>
+        </div>
+
+        <div
+          class="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-800/50"
+        >
+          <UButton
+            label="Não"
+            color="gray"
+            variant="ghost"
+            @click="showDeleteModal = false"
+          />
+          <UButton
+            label="Sim"
+            color="red"
+            variant="solid"
+            icon="i-lucide-trash-2"
+            :loading="isLoading"
+            @click="deleteUser"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
 import { useRuntimeConfig, useToast } from "#imports";
+import emailjs from "@emailjs/browser";
+//import DeleteUserModal from "~/components/DeleteUserModal.vue";
 
 const config = useRuntimeConfig();
 const toast = useToast();
 const isLoading = ref(false);
+const showDeleteModal = ref(false);
+
+// Estado da ROLE do usuário logado
+const currentUserRole = ref("");
+
+// Helper para verificar se é Admin
+const isAdmin = computed(() => currentUserRole.value === "admin");
+
+// --- LÊ VARIÁVEIS DO NUXT.CONFIG (que lê do .env) ---
+const EMAILJS_SERVICE_ID = config.public.emailjsServiceId as string;
+const EMAILJS_TEMPLATE_ID = config.public.emailjsTemplateId as string;
+const EMAILJS_PUBLIC_KEY = config.public.emailjsPublicKey as string;
 
 // --- TIPAGEM ---
 interface User {
@@ -307,6 +400,14 @@ interface User {
   created_at?: string;
 }
 
+// Interface para erro da API
+interface ApiError {
+  data?: {
+    detail?: string | { msg: string }[];
+  };
+  message?: string;
+}
+
 // --- ESTADO DE PESQUISA ---
 const searchQuery = ref("");
 const usersList = ref<User[]>([]);
@@ -318,9 +419,16 @@ const editingId = ref<number | null>(null); // Guarda o ID do usuário sendo edi
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return [];
   const term = searchQuery.value.toUpperCase();
-  return usersList.value.filter((u) =>
-    u.full_name.toUpperCase().includes(term),
-  );
+  return usersList.value.filter((u) => {
+    // PROTEÇÃO: Garante que full_name existe antes de tentar converter
+    // Se u.full_name for null/undefined, usa string vazia para não quebrar
+    const name = u.full_name ? u.full_name.toUpperCase() : "";
+
+    // Opcional: Permitir buscar por email também
+    const email = u.email ? u.email.toUpperCase() : "";
+
+    return name.includes(term) || email.includes(term);
+  });
 });
 
 // Opções de Roles (Perfis)
@@ -354,6 +462,58 @@ const errors = reactive({
   role: undefined as string | undefined,
 });
 
+// --- FUNÇÃO DE ENVIO DE EMAIL (FRONTEND) ---
+async function sendWelcomeEmail(userData: {
+  name: string;
+  email: string;
+  password?: string;
+}) {
+  // Verifica se as chaves existem antes de tentar enviar
+  if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
+    console.warn("EmailJS: Chaves não configuradas no .env");
+    return;
+  }
+
+  if (!userData.email) return;
+
+  // Parâmetros que serão enviados para o template
+  // Certifique-se que no painel do EmailJS o campo 'To' está como {{to_email}}
+  const templateParams = {
+    to_name: userData.name,
+    to_email: userData.email,
+    senha: userData.password || "Senha padrão ou definida pelo admin",
+    link_plataforma: window.location.origin + "/login",
+  };
+
+  try {
+    const response = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      templateParams,
+      EMAILJS_PUBLIC_KEY,
+    );
+    console.log(
+      "✅ Email enviado com sucesso!",
+      response.status,
+      response.text,
+    );
+
+    toast.add({
+      title: "E-mail enviado!",
+      description: `Convite com senha enviado para ${userData.email}`,
+      color: "blue",
+      icon: "i-lucide-mail",
+    });
+  } catch (error: unknown) {
+    console.error("❌ Falha no EmailJS:", error);
+    toast.add({
+      title: "Falha no envio de e-mail",
+      description: "Usuário criado, mas o e-mail falhou (verifique console).",
+      color: "orange",
+    });
+  }
+}
+
 // --- API: BUSCAR USUÁRIOS ---
 async function fetchUsers() {
   loadingUsers.value = true;
@@ -367,41 +527,82 @@ async function fetchUsers() {
   }
 }
 
-// --- DELETAR USUÁRIO ---
+// ----------------------------------------------------
+// VERIFICAÇÃO DE STATUS (Botão Excluir)
+// ----------------------------------------------------
+async function handleDeleteClick() {
+  console.log("Clicou em Excluir");
+  if (!isEditing.value || !editingId.value) return;
+
+  isLoading.value = true;
+
+  try {
+    const userCheck = await $fetch<User>(
+      `${config.public.apiBase}/users/${editingId.value}`,
+    );
+    console.log("Status do usuário:", userCheck.active);
+    // Se Ativo (true) -> BLOQUEIA
+    if (userCheck.active === true) {
+      toast.add({
+        title: "Exclusão Bloqueada",
+        description:
+          "Esta conta ainda está ativa. Edite, salve como 'Desativar Conta' e tente novamente.",
+        color: "yellow",
+        icon: "i-lucide-alert-triangle",
+        timeout: 8000,
+      });
+      return; // Retorna sem abrir modal
+    }
+
+    // Se chegou aqui, active = false -> abre modal
+    console.log("Usuário inativo, abrindo modal...");
+    showDeleteModal.value = true;
+  } catch (err) {
+    console.error("Erro na verificação", err);
+    toast.add({
+      title: "Erro",
+      description: "Falha ao verificar status.",
+      color: "red",
+    });
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// ----------------------------------------------------
+// DELETAR (Chamado pelo Modal)
+// ----------------------------------------------------
 async function deleteUser() {
   if (!editingId.value) return;
 
-  // 🔒 Bloqueia exclusão se a conta estiver ativa
-  if (!form.is_inactive) {
-    toast.add({
-      title: "Este usuário ainda está ATIVO.",
-      color: "yellow",
-      icon: "i-lucide-alert-triangle",
-    });
-    return;
-  }
-
+  isLoading.value = true;
   try {
     await $fetch(`${config.public.apiBase}/users/${editingId.value}`, {
       method: "DELETE",
     });
 
     toast.add({
-      title: "Conta Desativada DELETADA da Base de Dados",
-      color: "red",
+      title: "Conta Deletada",
+      description: "O registro foi removido definitivamente do banco de dados.",
+      color: "green",
       icon: "i-lucide-trash-2",
     });
 
+    showDeleteModal.value = false;
     resetForm();
     fetchUsers();
-  } catch (err) {
-    console.error("Erro ao deletar usuário", err);
-    toast.add({
-      title: "Erro ao deletar usuário",
-      description: "Tente novamente.",
-      color: "red",
-      icon: "i-lucide-alert-circle",
-    });
+  } catch (err: unknown) {
+    const error = err as ApiError;
+    console.error("Erro ao excluir:", error);
+    let msg = "Não foi possível excluir a conta.";
+    if (error.data?.detail) {
+      msg = Array.isArray(error.data.detail)
+        ? error.data.detail[0].msg
+        : (error.data.detail as string);
+    }
+    toast.add({ title: "Erro", description: msg, color: "red" });
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -431,6 +632,7 @@ function selectUserToEdit(user: User) {
 
   // Limpa a busca para fechar a lista
   searchQuery.value = "";
+  showDeleteModal.value = false;
 
   toast.add({
     title: "Modo de Edição",
@@ -456,6 +658,7 @@ function resetForm() {
   isEditing.value = false;
   editingId.value = null;
   searchQuery.value = "";
+  showDeleteModal.value = false;
 
   // 2. Limpa os erros visuais
   Object.keys(errors).forEach((key) => {
@@ -492,9 +695,11 @@ function handleCpfInput(value: string) {
 }
 
 // Helper apenas para visualização na lista (sem alterar o model)
-function formatCpf(value: string) {
+function formatCpf(value: string | number | null | undefined) {
   if (!value) return "";
-  return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  // Converte forçadamente para string para garantir que o .replace funcione
+  const strValue = String(value).replace(/\D/g, "");
+  return strValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 }
 
 function handlePhoneInput(value: string) {
@@ -520,35 +725,44 @@ function validateForm() {
     (key) => (errors[key as keyof typeof errors] = undefined),
   );
 
-  // 1. Nome
+  // 1. Nome, obrigatório para todos
   if (!form.full_name || form.full_name.length < 3) {
     errors.full_name = "O nome deve ter no mínimo 3 caracteres.";
     isValid = false;
   }
 
-  // 2. Email (Regra pedida)
-  if (!form.email || !form.email.includes("@") || !form.email.includes(".")) {
-    errors.email = "Informe um e-mail válido, exemplo: usuário@dominio.com";
-    isValid = false;
-  }
+  // Validação de campos restritos: Só valida se o usuário for ADMIN
+  // Se for AGENT, os campos não aparecem, então não devem ser validados no front (o back cuida se mantiver o valor antigo)
 
-  // 3. CPF
-  const cpfClean = form.cpf.replace(/\D/g, "");
-  if (!cpfClean || cpfClean.length !== 11) {
-    // Texto solicitado + aviso de tamanho
-    errors.cpf = "Informe somente números (11 dígitos necessários)";
-    isValid = false;
-  }
+  if (currentUserRole.value === "admin") {
+    // 2. Email (Regra pedida)
+    if (!form.email || !form.email.includes("@") || !form.email.includes(".")) {
+      errors.email = "Informe um e-mail válido, exemplo: usuário@dominio.com";
+      isValid = false;
+    }
 
-  // 4. Telefone (AGORA OPCIONAL)
-  // Valida apenas se o usuário digitou algo
+    // 3. CPF
+    const cpfClean = form.cpf.replace(/\D/g, "");
+    if (!cpfClean || cpfClean.length !== 11) {
+      // Texto solicitado + aviso de tamanho
+      errors.cpf = "Informe somente números (11 dígitos necessários)";
+      isValid = false;
+    }
+
+    // 4. Role é obrigatório se for admin
+    if (!form.role) {
+      errors.role = "Selecione um perfil de acesso";
+      isValid = false;
+    }
+  }
+  // 5. Telefone (AGORA OPCIONAL), Valida apenas se o usuário digitou algo
   const phoneClean = form.phone.replace(/\D/g, "");
   if (phoneClean.length > 0 && phoneClean.length < 10) {
     errors.phone = "Se informado, use DDD + Número";
     isValid = false;
   }
 
-  // 5. Senha
+  // 6. Senha
   if (!isEditing.value) {
     // Novo Cadastro: Senha obrigatória
     if (!form.password || form.password.length < 8) {
@@ -573,12 +787,6 @@ function validateForm() {
     }
   }
 
-  // 6. Role ID
-  if (!form.role) {
-    errors.role = "Selecione um perfil de acesso";
-    isValid = false;
-  }
-
   return isValid;
 }
 
@@ -601,6 +809,7 @@ async function onSubmit() {
     // Correção lint: Tipagem do payload ao invés de 'any'
     const payload: Record<string, unknown> = {
       full_name: form.full_name,
+      // Envia os outros campos mesmo que ocultos (pois estão no 'form' reativo preenchido no selectUser)
       email: form.email,
       vip: form.vip,
       cpf: form.cpf.replace(/\D/g, ""),
@@ -614,6 +823,7 @@ async function onSubmit() {
     let url = `${config.public.apiBase}/users/`;
     let method: "POST" | "PUT" = "POST";
     let successMsg = "Usuário cadastrado.";
+    const isNewUser = !isEditing.value; // Flag para saber se é novo
 
     if (isEditing.value && editingId.value) {
       url = `${config.public.apiBase}/users/${editingId.value}`;
@@ -628,6 +838,15 @@ async function onSubmit() {
     });
 
     toast.add({ title: "Sucesso!", description: successMsg, color: "green" });
+
+    // Se for novo usuário, envia e-mail de boas-vindas
+    if (isNewUser) {
+      await sendWelcomeEmail({
+        name: form.full_name,
+        email: form.email,
+        password: form.password, // Passando a senha para o e-mail
+      });
+    }
 
     resetForm();
     fetchUsers();
@@ -665,6 +884,8 @@ async function onSubmit() {
 const { checkUserAcceptance } = useTerms();
 
 onMounted(async () => {
+  // Pega a role do usuário no mount
+  currentUserRole.value = localStorage.getItem("user_role") || "viewer";
   const UserAcceptance = await checkUserAcceptance();
   if (UserAcceptance) {
     fetchUsers();
