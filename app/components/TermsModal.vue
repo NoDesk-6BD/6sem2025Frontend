@@ -13,16 +13,23 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [boolean] }>();
 
-// Estado do pai atualizado dinamicamente pelo filho
-const acceptanceRequired = ref({
-  accepted: false,
-  termId: null as number | null,
-});
+const acceptanceRequired = ref<{ accepted: boolean; termId: number }[]>([]);
 
-// Função acionada pelo filho via emit
+// Atualiza a lista de aceites
 function updateAcceptance(payload: { accepted: boolean; termId: number }) {
   console.log("Recebido do filho:", payload);
-  acceptanceRequired.value = payload;
+
+  const index = acceptanceRequired.value.findIndex(
+    (item) => item.termId === payload.termId,
+  );
+
+  if (index !== -1) {
+    acceptanceRequired.value[index] = payload;
+  } else {
+    acceptanceRequired.value.push(payload);
+  }
+
+  console.log("Estado atualizado:", acceptanceRequired.value);
 }
 
 const requiredTerms: TermsResponse = await $fetch(
@@ -42,21 +49,21 @@ const errorMessage = ref("");
 
 async function AcceptTerms() {
   try {
-    console.log("Estado atual em AcceptTerms():", acceptanceRequired.value);
+    const requiredAcceptance = acceptanceRequired.value.find(
+      (t) => t.termId === requiredTerms.id,
+    );
 
-    if (!acceptanceRequired.value.accepted) {
+    if (!requiredAcceptance || !requiredAcceptance.accepted) {
       errorMessage.value =
-        "Você precisa aceitar o termo obrigatório antes de continuar.";
+        "Você precisa aceitar ao menos o termo obrigatório antes de continuar.";
       return;
     }
-
-    errorMessage.value = "";
 
     await $fetch(`${config.public.apiBase}/terms/accept`, {
       method: "POST",
       body: {
         user_id: props.userId,
-        terms_id: acceptanceRequired.value.termId,
+        terms_id: requiredAcceptance.termId, // apenas o obrigatório
       },
     });
 
@@ -66,8 +73,13 @@ async function AcceptTerms() {
     emit("close", false);
   }
 }
+const toast = useToast();
 
 function DeclineTerms() {
+  toast.add({
+    title:
+      "Você precisa aceitar ao menos o termo obrigatório antes de continuar.",
+  });
   emit("close", false);
 }
 </script>
@@ -85,6 +97,20 @@ function DeclineTerms() {
         :term-id="requiredTerms.id"
         :term-content="requiredTerms.content"
         :is-required="true"
+        @change-value="updateAcceptance"
+      />
+
+      <TermBlock
+        :term-id="666"
+        term-content="Seus dados poderão ser utilizados de forma agregada e anonimizada para análises estatísticas internas, possibilitando a identificação de padrões de uso, melhoria no desempenho do sistema e desenvolvimento de novas funcionalidades. Nenhuma informação pessoal individualmente identificável será compartilhada com terceiros."
+        :is-required="false"
+        @change-value="updateAcceptance"
+      />
+
+      <TermBlock
+        :term-id="999"
+        term-content="Ao aceitar este termo, você autoriza o envio de comunicações personalizadas relacionadas a funcionalidades, novidades, pesquisas de satisfação e ofertas relevantes ao seu perfil de uso. Essa comunicação poderá ocorrer por e-mail, SMS ou notificações dentro da plataforma. Você poderá revogar este consentimento a qualquer momento."
+        :is-required="false"
         @change-value="updateAcceptance"
       />
 
