@@ -11,7 +11,10 @@
         :class="[collapsed ? 'justify-center' : 'justify-between']"
       >
         <div class="flex items-center gap-3 overflow-hidden">
-          <span class="flex items-center justify-center">
+          <span
+            v-if="!collapsed"
+            class="flex items-center justify-center font-medium whitespace-nowrap"
+          >
             <UserCircle2 :size="40" class="text-white" />
           </span>
           <div
@@ -124,7 +127,7 @@ import { useState } from "#imports";
 const collapsed = useState("sidebar-collapsed");
 
 // Estado reativo para nome e role
-const currentUserName = ref("Usuário");
+const currentUserName = ref("user_name");
 const currentUserRole = ref("viewer"); // Padrão seguro até carregar
 
 function handleLogout() {
