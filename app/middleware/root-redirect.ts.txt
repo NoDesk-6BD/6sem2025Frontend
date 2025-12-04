@@ -1,0 +1,43 @@
+export default defineNuxtRouteMiddleware((to) => {
+  // 1. Pega o token do cookie
+  // Nota: Garanta que seu Login.vue esteja gravando o cookie 'auth_token'
+  // além do localStorage, ou use useCookie('auth_token').value = token no login.
+  const token = useCookie("auth_token");
+
+  // -----------------------------------------------------------
+  // REGRA 1: Redirecionamento da Raiz (Substitui root-redirect.ts)
+  // -----------------------------------------------------------
+  if (to.path === "/") {
+    if (token.value) {
+      return navigateTo("/dashboard");
+    }
+    return navigateTo("/login");
+  }
+
+  // -----------------------------------------------------------
+  // REGRA 2: Proteção de Rotas (Não deixa acessar sem token)
+  // -----------------------------------------------------------
+  // Se não tem token e não está indo para o login, manda pro login
+  if (!token.value && to.path !== "/login") {
+    return navigateTo("/login");
+  }
+
+  // Se tem token e tenta ir pro login, manda pro dashboard
+  if (token.value && to.path === "/login") {
+    return navigateTo("/dashboard");
+  }
+
+  // -----------------------------------------------------------
+  // REGRA 3: Controle de Acesso por Função (Role)
+  // -----------------------------------------------------------
+  // Apenas no cliente, pois o 'role' está no localStorage
+  if (process.client && token.value) {
+    const userRole = localStorage.getItem("user_role");
+
+    // Se o usuário for 'viewer' e tentar acessar qualquer rota que comece com '/users'
+    if (userRole === "viewer" && to.path.startsWith("/users")) {
+      // Bloqueia e manda para o dashboard
+      return navigateTo("/dashboard");
+    }
+  }
+});

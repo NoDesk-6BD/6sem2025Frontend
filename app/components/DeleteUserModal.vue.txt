@@ -1,0 +1,78 @@
+<template>
+  <UModal
+    v-model="isOpen"
+    title="Atenção"
+    description="Confirmação de exclusão de usuário"
+  >
+    <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+
+      <template #header>
+        <div class="flex items-center gap-3">
+          <UIcon name="i-lucide-alert-triangle" class="w-6 h-6 text-red-600 dark:text-red-500" />
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+            Atenção!
+          </h3>
+        </div>
+      </template>
+
+      <div class="py-2">
+        <p class="text-gray-700 dark:text-gray-300 text-base">
+          Tem certeza que deseja deletar a conta de
+          <strong class="text-black dark:text-white text-lg">{{ userName }}</strong>?
+          <br /><br />
+          <span class="text-red-600 font-bold bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded">
+            Esta ação não poderá ser desfeita!
+          </span>
+        </p>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UButton
+            label="Não"
+            color="gray"
+            variant="ghost"
+            @click="close"
+          />
+          <UButton
+            label="Sim"
+            color="red"
+            variant="solid"
+            icon="i-lucide-trash-2"
+            :loading="loading"
+            @click="confirm"
+          />
+        </div>
+      </template>
+    </UCard>
+  </UModal>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+
+const props = defineProps<{
+  modelValue: boolean;
+  userName: string;
+  loading: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: "update:modelValue", value: boolean): void;
+  (e: "confirm"): void;
+}>();
+
+// Computada para sincronizar v-model do pai com o filho
+const isOpen = computed({
+  get: () => props.modelValue,
+  set: (val) => emit("update:modelValue", val)
+});
+
+function close() {
+  isOpen.value = false;
+}
+
+function confirm() {
+  emit("confirm");
+}
+</script>

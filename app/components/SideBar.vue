@@ -11,15 +11,21 @@
         :class="[collapsed ? 'justify-center' : 'justify-between']"
       >
         <div class="flex items-center gap-3 overflow-hidden">
-          <span class="flex items-center justify-center">
+          <span
+            v-if="!collapsed"
+            class="flex items-center justify-center font-medium whitespace-nowrap"
+          >
             <UserCircle2 :size="40" class="text-white" />
           </span>
           <div
             v-if="!collapsed"
-            class="text-white font-semibold whitespace-nowrap"
+            class="text-white font-semibold whitespace-nowrap flex flex-col"
           >
             <!-- SIMULAÇÃO DO NOME/PERFIL -->
-            {{ currentUserRole === "admin" ? "Administrador" : "Usuário" }}
+            <span>{{ currentUserName }}</span>
+            <span class="text-xs text-gray-300 font-normal capitalize">{{
+              currentUserRole
+            }}</span>
           </div>
         </div>
         <button
@@ -106,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"; // Adicione 'computed' e 'ref'
+import { ref, computed, onMounted } from "vue"; // Adicione 'computed' e 'ref'
 import {
   UserCircle2,
   LayoutDashboard,
@@ -120,9 +126,22 @@ import { useState } from "#imports";
 
 const collapsed = useState("sidebar-collapsed");
 
+// Estado reativo para nome e role
+const currentUserName = ref("user_name");
+const currentUserRole = ref("viewer"); // Padrão seguro até carregar
+
 function handleLogout() {
   console.log("Logout clicado");
+  // Limpa tudo ao sair
   localStorage.removeItem("auth_token");
+  localStorage.removeItem("user_id");
+  localStorage.removeItem("user_name");
+  localStorage.removeItem("user_role");
+
+  // Limpa o Cookie também (Importante!)
+  const tokenCookie = useCookie("auth_token");
+  tokenCookie.value = null;
+
   navigateTo("/login");
 }
 
@@ -130,15 +149,22 @@ function handleLogout() {
 // LÓGICA DE SIMULAÇÃO DE PERMISSÃO
 // --------------------------------------------------------
 
-// 1. Simula o perfil do usuário logado (Mude o valor para testar)
-// 'admin' ou 'agent' pode ver. 'viewer' não pode.
-const currentUserRole = ref("admin"); // SIMULAÇÃO: Altere para 'agent' ou 'viewer' para testar.
-
-// 2. Computed que verifica a permissão
+// Verifica permissão com base no role carregado
 const canManageUsers = computed(() => {
   return currentUserRole.value !== "viewer";
 });
 
-// 3. Adiciona o novo ícone (UserCheck)
-// Ele já foi adicionado na lista de imports acima.
+// Ao montar o componente (no cliente), recupera os dados do localStorage
+onMounted(() => {
+  const storedName = localStorage.getItem("user_name");
+  const storedRole = localStorage.getItem("user_role");
+
+  if (storedName) {
+    currentUserName.value = storedName;
+  }
+
+  if (storedRole) {
+    currentUserRole.value = storedRole;
+  }
+});
 </script>

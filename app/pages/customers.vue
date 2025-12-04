@@ -31,22 +31,61 @@
 
     <!-- GRID 1: Tabela de Tickets Vencidos -->
     <UCard :ui="{ body: { padding: 'p-0' } }">
-      <!-- Cabeçalho da Tabela -->
       <template #header>
-        <div
-          class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4"
-        >
-          <h2 class="text-lg font-semibold text-gray-600">Tickets Vencidos</h2>
+        <div class="flex flex-col gap-4">
+          <div
+            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4"
+          >
+            <h2 class="text-lg font-semibold text-gray-600">
+              Tickets Vencidos
+            </h2>
 
-          <!-- Controles de Paginação: Itens por página -->
-          <div class="flex items-center gap-3">
-            <span class="text-sm text-gray-500">Itens por página:</span>
-            <USelect
-              v-model="limit"
-              :items="[50, 100, 150, 200]"
-              class="w-20"
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-gray-500">Itens por página:</span>
+              <USelect
+                v-model="limit"
+                :items="[50, 100, 150, 200]"
+                class="w-20"
+                size="sm"
+              />
+            </div>
+          </div>
+
+          <div
+            class="flex flex-col sm:flex-row gap-4 items-end sm:items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
+          >
+            <UInput
+              v-model="filterSubject"
+              icon="i-lucide-search"
+              placeholder="Filtrar por Assunto..."
+              class="w-full sm:w-64"
               size="sm"
             />
+
+            <div
+              class="flex items-center gap-2 cursor-pointer select-none transition-colors duration-200"
+              @click="filterVipOnly = !filterVipOnly"
+            >
+              <UToggle
+                v-model="filterVipOnly"
+                :color="filterVipOnly ? 'primary' : 'gray'"
+              />
+              <span
+                class="text-sm transition-colors duration-200"
+                :class="
+                  filterVipOnly
+                    ? 'text-green-600 font-bold'
+                    : 'text-gray-600 font-medium'
+                "
+              >
+                Apenas VIP
+              </span>
+            </div>
+
+            <div class="ml-auto text-xs text-gray-500">
+              Exibindo {{ filteredTickets.length }} de
+              {{ expiredTickets.length }} carregados
+            </div>
           </div>
         </div>
       </template>
@@ -97,9 +136,9 @@
             </tr>
 
             <!-- Estado: Lista vazia -->
-            <tr v-else-if="expiredTickets.length === 0">
+            <tr v-else-if="filteredTickets.length === 0">
               <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                Nenhum ticket vencido encontrado.
+                Nenhum ticket encontrado com os filtros atuais.
               </td>
             </tr>
 
@@ -196,7 +235,7 @@
       </template>
     </UCard>
 
-    <!-- GRID 2: Termômetros -->
+    <!-- GRID 2: Termômetros
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
       <DashBase
         dash-name="Tempo de Resposta (SLA)"
@@ -221,23 +260,23 @@
           />
         </div>
       </DashBase>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { useRuntimeConfig, useToast } from "#imports";
-import DashBase from "~/components/DashBase.vue";
-import SatisfactionMeter from "~/components/SatisfactionMeter.vue";
-import type { GaugeResponse } from "~/types/interfaces";
+// import DashBase from "~/components/DashBase.vue";
+// import SatisfactionMeter from "~/components/SatisfactionMeter.vue";
+// import type { GaugeResponse } from "~/types/interfaces";
 
 // -------------------------------
 // CONFIGURAÇÕES
 // -------------------------------
 const config = useRuntimeConfig();
 const toast = useToast();
-const chartTitleClass = "text-gray-500 font-medium text-xl";
+// const chartTitleClass = "text-gray-500 font-medium text-xl";
 
 // -------------------------------
 // ESTADOS
@@ -253,6 +292,10 @@ const paginationKey = ref(0);
 const totalFiltered = ref(0);
 const csvLoading = ref(false);
 
+// Filtros Locais
+const filterSubject = ref("");
+const filterVipOnly = ref(false);
+
 // Paginação
 const page = ref(1);
 const limit = ref(50);
@@ -265,7 +308,22 @@ const pageCount = computed(() => {
 });
 
 // Filtra tickets pelo cliente selecionado
-const filteredTickets = computed(() => expiredTickets.value);
+// const filteredTickets = computed(() => expiredTickets.value);
+
+// Filtra tickets LOCALMENTE (sobre os dados carregados da página atual)
+const filteredTickets = computed(() => {
+  return expiredTickets.value.filter((t) => {
+    // 1. Filtro de Texto (Assunto)
+    const matchesSubject = t.titulo
+      .toLowerCase()
+      .includes(filterSubject.value.toLowerCase());
+
+    // 2. Filtro VIP
+    const matchesVip = filterVipOnly.value ? t.user_vip === "Sim" : true;
+
+    return matchesSubject && matchesVip;
+  });
+});
 
 // -------------------------------
 // INTERFACES
@@ -414,7 +472,7 @@ async function downloadCsv() {
 // -------------------------------
 async function fetchTotalExpiredGlobal() {
   try {
-    const res = await $fetch(
+    const res = await $fetch<{ total_expired_tickets: number }>(
       `${config.public.apiBase}/dashboard/total_expired_tickets`,
     );
 
@@ -547,13 +605,24 @@ watch(selectedCustomer, () => {
 // -------------------------------
 // LIFECYCLE
 // -------------------------------
-onMounted(() => {
+
+const { checkUserAcceptance } = useTerms();
+onMounted(async () => {
+  const UserAcceptance = await checkUserAcceptance();
+  if (UserAcceptance) {
+    fetchContentData();
+  } else {
+    navigateTo("/login");
+  }
+});
+
+function fetchContentData() {
   fetchTotalExpiredGlobal();
   fetchCompanies();
   fetchExpiredTickets();
-});
+}
 
-// -------------------------------
+/* -------------------------------
 // MOCKS PARA DASHBOARDS
 // -------------------------------
 const tempoRespostaData = ref<GaugeResponse>({
@@ -562,5 +631,5 @@ const tempoRespostaData = ref<GaugeResponse>({
 
 const satisfacaoClienteData = ref<GaugeResponse>({
   datasets: [{ data: [65, 35], label: "CSAT" }],
-});
+}); */
 </script>
